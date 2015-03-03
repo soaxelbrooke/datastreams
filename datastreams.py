@@ -27,6 +27,12 @@ class DataStream(object):
     def __add__(self, other):
         return DataSet(self._source + other._source)
 
+    def next(self):
+        while True:
+            src_next = next(self._source)
+            if self._predicate(src_next):
+                return self._transform(src_next)
+
     def reduce(self, function, initial):
         return DataSet(reduce(function, self, initial))
 
@@ -39,25 +45,25 @@ class DataStream(object):
         return DataStream(self)
 
     def set(self, attr, transfer_func):
-        def rowsetattr(row):
-            newrow = copy(row)
-            setattr(newrow, attr, transfer_func(row))
-            return newrow
-        self._transform = rowsetattr
+        def row_setattr(row):
+            new_row = copy(row)
+            setattr(new_row, attr, transfer_func(row))
+            return new_row
+        self._transform = row_setattr
         return DataStream(self)
 
     def get(self, name, default=None):
-        def rowgetattr(row):
+        def row_getattr(row):
             return getattr(row, name)
-        self._transform = rowgetattr
+        self._transform = row_getattr
         return DataStream(self)
 
     def delete(self, key):
-        def objdel(row):
-            newrow = copy(row)
-            delattr(newrow, key)
-            return newrow
-        self._transform = objdel
+        def obj_del(row):
+            new_row = copy(row)
+            delattr(new_row, key)
+            return new_row
+        self._transform = obj_del
         return DataStream(self)
 
     def take(self, n):
@@ -69,26 +75,24 @@ class DataStream(object):
     def collect(self):
         return DataSet(self)
     
-    def collectas(self, constructor):
+    def collect_as(self, constructor):
         return DataSet(imap(constructor, self))
 
     @staticmethod
-    def fromcsv(path, headers=None, constructor=Datum):
-        with open(path) as source_file:
-            if headers is None:
-                headers = [h.strip() for h in source_file.readline().split(",")]
-            reader = csv.reader(source_file)
-            return DataSet(constructor(zip(headers, row)) for row in reader)
+    def from_csv(path, headers=None, constructor=Datum):
+        source_file = open(path)
+        if headers is None:
+            headers = [h.strip() for h in source_file.readline().split(",")]
+        reader = DataStream.iter_csv(source_file)
+        return DataStream(constructor(zip(headers, row)) for row in reader)
 
-
-        # with open(path) as source_file:
-        #     if headers_from_file:
-        #         headers = [h.strip() for h in source_file.readline().split(",")]
-        #     if constructor == dict:
-        #         reader = csv.DictReader(source_file, headers)
-        #     else:
-        #         reader = (constructor(line) for line in source_file)
-        #     return DataSet(row for row in reader)
+    @staticmethod
+    def iter_csv(source_file):
+        reader = csv.reader(source_file)
+        for row in reader:
+            yield row
+        source_file.close()
+        raise StopIteration
 
 
 class DataSet(DataStream):
@@ -102,7 +106,7 @@ class DataSet(DataStream):
     def __getitem__(self, item):
         return self._source[item]
 
-    def reduceright(self, function, init):
+    def reduce_right(self, function, init):
         return DataSet(reduce(function, self, init))
 
     def join(self, how, key, right):
@@ -163,7 +167,7 @@ class DataSet(DataStream):
         """
         raise NotImplementedError
 
-    def sortby(self, key_fn, descending=True):
+    def sort_by(self, key_fn, descending=True):
         return DataStream(sorted(self._source, key=key_fn, reverse=descending))
 
     def reverse(self):
@@ -173,5 +177,5 @@ class DataSet(DataStream):
         return DataStream(iter(self))
 
     @staticmethod
-    def fromcsv(path, headers=None, constructor=Datum):
-        return DataSet(DataStream.fromcsv(path, headers, constructor))
+    def from_csv(path, headers=None, constructor=Datum):
+        return DataSet(DataStream.from_csv(path, headers, constructor))
