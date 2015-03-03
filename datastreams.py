@@ -66,6 +66,13 @@ class DataStream(object):
         self._transform = obj_del
         return DataStream(self)
 
+    def for_each(self, function):
+        def apply_fn(row):
+            function(row)
+            return row
+        self._transform = apply_fn
+        return DataStream(self)
+
     def take(self, n):
         return DataStream(islice(self, 0, n))
 
