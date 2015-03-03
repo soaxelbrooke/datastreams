@@ -1,7 +1,14 @@
 from itertools import imap, islice
-from collections import defaultdict
+from object_join import JoinedObject
 import csv
 from copy import copy
+from collections import defaultdict
+
+
+class Datum(object):
+    def __init__(self, attributes):
+        for name, value in attributes:
+            setattr(self, name, value)
 
 
 class DataStream(object):
@@ -66,45 +73,23 @@ class DataStream(object):
         return DataSet(imap(constructor, self))
 
     @staticmethod
-    def _object_join(a, b):
-        ab = type(a.__class__.__name__ + b.__class__.__name__, 
-                  (a.__class__, b.__class__, object), 
-                  dict(b.__dict__.items() + a.__dict__.items()))
-        return ab.__new__(ab)
-
-    @staticmethod
-    def fromcsv(path, headers=None, headers_from_file=True, constructor=dict):
+    def fromcsv(path, headers=None, constructor=Datum):
         with open(path) as source_file:
-            if headers_from_file:
+            if headers is None:
                 headers = [h.strip() for h in source_file.readline().split(",")]
-            if constructor == dict:
-                reader = csv.DictReader(source_file, headers)
-            else:
-                reader = (constructor(line) for line in source_file)
-            return DataSet(row for row in reader)
+            reader = csv.reader(source_file)
+            return DataSet(constructor(zip(headers, row)) for row in reader)
 
 
-class JoinedOjbect(object):
-    def __init__(self, left, right):
-        self.left = left
-        self.right = right
+        # with open(path) as source_file:
+        #     if headers_from_file:
+        #         headers = [h.strip() for h in source_file.readline().split(",")]
+        #     if constructor == dict:
+        #         reader = csv.DictReader(source_file, headers)
+        #     else:
+        #         reader = (constructor(line) for line in source_file)
+        #     return DataSet(row for row in reader)
 
-    def __getattr__(self, attr):
-        if attr == 'left': 
-            return self.left
-        elif attr == 'right':
-            return self.right
-        else:
-            return self.get_from_sources(attr)
-
-    def get_from_sources(self, attr):
-        if hasattr(self.left, attr):
-            return getattr(self.left, attr)
-        elif hasattr(self.right, attr):
-            return getattr(self.right, attr)
-        else:
-            raise AttributeError("Neither of joined object's parents have "
-                "attribute '{}'".format(attr))
 
 class DataSet(DataStream):
     def __init__(self, source):
@@ -120,10 +105,63 @@ class DataSet(DataStream):
     def reduceright(self, function, init):
         return DataSet(reduce(function, self, init))
 
-    def join(self, other, key):
-        joiner = {getattr(ele, key): ele for ele in other}
-        joined = (JoinedOjbect(ele, joiner[getattr(ele, key)]) for ele in self)
+    def join(self, how, key, right):
+        """ Returns a dataset joined using keys from right dataset only
+        :type how: str
+        :type right: DataSet
+        :type key: str
+        :rtype: DataSet
+        """
+        if how == 'left':
+            return self.left_join(key, right)
+        elif how == 'right':
+            return self.right_join(key, right)
+        elif how == 'inner':
+            return self.inner_join(key, right)
+        elif how == 'outer':
+            return self.outer_join(key, right)
+        else:
+            raise ValueError("Invalid value for how: {}, must be left, right, "
+                             "inner, or outer.".format(str(how)))
+
+    def left_join(self, key, right):
+        """ Returns a dataset joined using keys from right dataset only
+        :type right: DataSet
+        :type key: str
+        :rtype: DataSet
+        """
+        raise NotImplementedError
+
+    def right_join(self, key, right):
+        """ Returns a dataset joined using keys in right dataset only
+        :type right: DataSet
+        :type key: str
+        :rtype: DataSet
+        """
+        raise NotImplementedError
+
+    def inner_join(self, key, right):
+        """ Returns a dataset joined using keys in both dataset only
+        :type right: DataSet
+        :type key: str
+        :rtype: DataSet
+        """
+        joiner = defaultdict(list)
+        for ele in right:
+            joiner[getattr(ele, key)].append(ele)
+        joined = []
+        for ele in self:
+            for other in joiner[getattr(ele, key)]:
+                joined.append(JoinedObject(ele, other))
         return DataSet(joined)
+
+    def outer_join(self, key, right):
+        """ Returns a dataset joined using keys in either datasets
+        :type right: DataSet
+        :type key: str
+        :rtype: DataSet
+        """
+        raise NotImplementedError
 
     def sortby(self, key_fn, descending=True):
         return DataStream(sorted(self._source, key=key_fn, reverse=descending))
@@ -134,3 +172,6 @@ class DataSet(DataStream):
     def stream(self):
         return DataStream(iter(self))
 
+    @staticmethod
+    def fromcsv(path, headers=None, constructor=Datum):
+        return DataSet(DataStream.fromcsv(path, headers, constructor))
