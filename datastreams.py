@@ -1,6 +1,7 @@
 from itertools import imap, islice
 from collections import defaultdict
 import csv
+from copy import copy
 
 
 class DataStream(object):
@@ -30,34 +31,26 @@ class DataStream(object):
         self._predicate = filter_fn
         return DataStream(self)
 
-    def set(self, key, transfer_func):
-        def rowset(row):
-            row[key] = transfer_func(row)
-            return row
-        self._transform = rowset
-        return DataStream(self)
-
-    def setattr(self, attr, transfer_func):
+    def set(self, attr, transfer_func):
         def rowsetattr(row):
-            setattr(row, attr, transfer_func(row))
-            return row
+            newrow = copy(row)
+            setattr(newrow, attr, transfer_func(row))
+            return newrow
         self._transform = rowsetattr
         return DataStream(self)
 
-    def get(self, key):
-        def rowget(row):
-            return row.get(key)
-        self._transform = rowget
-        return DataStream(self)
-
-    def getattr(self, name, default=None):
+    def get(self, name, default=None):
         def rowgetattr(row):
             return getattr(row, name)
         self._transform = rowgetattr
         return DataStream(self)
 
     def delete(self, key):
-        self._transform = lambda row: {k: v for k, v in row.items() if k != key}
+        def objdel(row):
+            newrow = copy(row)
+            delattr(newrow, key)
+            return newrow
+        self._transform = objdel
         return DataStream(self)
 
     def take(self, n):
@@ -72,21 +65,12 @@ class DataStream(object):
     def collectas(self, constructor):
         return DataSet(imap(constructor, self))
 
-    def join(self, on, dataset):
-        joiner = defaultdict(dict)
-        for element in self + dataset:
-            joiner[element[on]].update(element)
-        return DataSet(joiner.values())
-
-    def select(self, *args):
-        self._transform = lambda row: {k: v for k, v in row.items() if k in args}
-        return DataStream(self)
-
-    def groupby(self, key, reduce_fn, init):
-        groups = {}
-        for row in self:
-            groups[row[key]] = reduce_fn(groups.get(row[key], init), row)
-        return groups
+    @staticmethod
+    def _object_join(a, b):
+        ab = type(a.__class__.__name__ + b.__class__.__name__, 
+                  (a.__class__, b.__class__, object), 
+                  dict(b.__dict__.items() + a.__dict__.items()))
+        return ab.__new__(ab)
 
     @staticmethod
     def fromcsv(path, headers=None, headers_from_file=True, constructor=dict):
@@ -99,6 +83,28 @@ class DataStream(object):
                 reader = (constructor(line) for line in source_file)
             return DataSet(row for row in reader)
 
+
+class JoinedOjbect(object):
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+
+    def __getattr__(self, attr):
+        if attr == 'left': 
+            return self.left
+        elif attr == 'right':
+            return self.right
+        else:
+            return self.get_from_sources(attr)
+
+    def get_from_sources(self, attr):
+        if hasattr(self.left, attr):
+            return getattr(self.left, attr)
+        elif hasattr(self.right, attr):
+            return getattr(self.right, attr)
+        else:
+            raise AttributeError("Neither of joined object's parents have "
+                "attribute '{}'".format(attr))
 
 class DataSet(DataStream):
     def __init__(self, source):
@@ -113,6 +119,11 @@ class DataSet(DataStream):
 
     def reduceright(self, function, init):
         return DataSet(reduce(function, self, init))
+
+    def join(self, other, key):
+        joiner = {getattr(ele, key): ele for ele in other}
+        joined = (JoinedOjbect(ele, joiner[getattr(ele, key)]) for ele in self)
+        return DataSet(joined)
 
     def sortby(self, key_fn, descending=True):
         return DataStream(sorted(self._source, key=key_fn, reverse=descending))
