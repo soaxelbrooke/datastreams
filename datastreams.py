@@ -78,6 +78,9 @@ class DataStream(object):
     def collect_as(self, constructor):
         return DataSet(imap(constructor, self))
 
+    def pipe_to(self, function):
+        return map(function, self)
+
     @staticmethod
     def from_csv(path, headers=None, constructor=Datum):
         source_file = open(path)
