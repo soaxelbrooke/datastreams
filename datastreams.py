@@ -81,7 +81,7 @@ class DataStream(object):
 
     def collect(self):
         return DataSet(self)
-    
+
     def collect_as(self, constructor):
         return DataSet(imap(constructor, self))
 
@@ -115,6 +115,9 @@ class DataSet(DataStream):
 
     def __getitem__(self, item):
         return self._source[item]
+
+    def apply(self, function):
+        return DataSet(function(self))
 
     def reduce_right(self, function, init):
         return DataSet(reduce(function, self, init))
