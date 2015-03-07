@@ -2,7 +2,7 @@ from itertools import imap, islice
 from object_join import JoinedObject
 import csv
 from copy import copy
-from collections import defaultdict
+from collections import defaultdict, deque
 
 
 class Datum(object):
@@ -13,7 +13,7 @@ class Datum(object):
 
 class DataStream(object):
     def __init__(self, source):
-        self._source = source
+        self._source = iter(source)
         self._transform = lambda row: row
         self._predicate = lambda row: True
 
@@ -39,6 +39,12 @@ class DataStream(object):
     def map(self, function):
         self._transform = function
         return DataStream(self)
+
+    def concat(self):
+        return DataStream(result for results in self for result in results)
+
+    def concat_map(self, function):
+        return self.map(function).concat()
 
     def filter(self, filter_fn):
         self._predicate = filter_fn
@@ -76,6 +82,9 @@ class DataStream(object):
     def take(self, n):
         return DataStream(islice(self, 0, n))
 
+    def take_now(self, n):
+        return DataSet([next(self) for _ in range(n)])
+
     def drop(self, n):
         return DataStream(islice(self, n, None))
 
@@ -85,8 +94,26 @@ class DataStream(object):
     def collect_as(self, constructor):
         return DataSet(imap(constructor, self))
 
-    def pipe_to(self, function):
-        return map(function, self)
+    def batch(self, batch_size):
+        def batch_iter():
+            while True:
+                try:
+                    yield self.take_now(batch_size)
+                except StopIteration:
+                    break
+        return DataStream(batch_iter())
+
+    def window(self, length, interval):
+        queue = deque(maxlen=length)
+
+        def window_iter():
+            while True:
+                try:
+                    queue.extend(self.take_now(interval))
+                    yield DataSet(queue)
+                except StopIteration:
+                    break
+        return DataStream(window_iter())
 
     @staticmethod
     def from_csv(path, headers=None, constructor=Datum):
@@ -141,11 +168,32 @@ class DataSet(DataStream):
             raise ValueError("Invalid value for how: {}, must be left, right, "
                              "inner, or outer.".format(str(how)))
 
+    def join_by(self, how, left_key_fn, right_key_fn, right):
+        """ Uses two key functions perform a join.  Key functions should produce
+        hashable types to be used to compare/index dicts.
+        :type how: str
+        :type left_key_fn: (object) -> object
+        :type right_key_fn: (object) -> object
+        :type right: DataSet
+        :rtype: DataSet
+        """
+        raise NotImplementedError
+
     def left_join(self, key, right):
         """ Returns a dataset joined using keys from right dataset only
         :type right: DataSet
         :type key: str
         :rtype: DataSet
+        """
+        return self.left_join_by(
+            lambda row: getattr(row, key), lambda row: getattr(row, key), right)
+
+    def left_join_by(self, left_key_fn, right_key_fn, right):
+        """
+        :param left_key_fn:
+        :param right_key_fn:
+        :param right:
+        :return:
         """
         raise NotImplementedError
 
