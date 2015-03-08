@@ -1,4 +1,4 @@
-from itertools import imap, islice
+from itertools import imap, islice, ifilter
 from object_join import JoinedObject
 import csv
 from copy import copy
@@ -18,8 +18,7 @@ class DataStream(object):
         self._predicate = lambda row: True
 
     def __iter__(self):
-        return (self._transform(row) for row in self._source
-                if self._predicate(row))
+        return imap(self._transform, ifilter(self._predicate, self._source))
 
     def __repr__(self):
         return str(list(self._source))
