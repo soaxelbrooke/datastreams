@@ -5,27 +5,33 @@ from copy import copy
 
 class DictStream(DataStream):
 
+    @staticmethod
+    def Stream(iterable):
+        return DictStream(iterable)
+
+    @staticmethod
+    def Set(iterable):
+        return DictSet(iterable)
+
     def set(self, key, transfer_func):
         def rowset(row):
             newrow = copy(row)
             newrow[key] = transfer_func(row)
-            return row
-        self._transform = rowset
-        return DictStream(self)
+            return newrow
+        return self.map(rowset)
 
-    def get(self, key):
+    def get(self, key, default=None):
         def rowget(row):
-            return row.get(key)
-        self._transform = rowget
-        return DictStream(self)
+            return row.get(key, default)
+        return self.map(rowget)
 
     def delete(self, key):
         self._transform = lambda row: {k: v for k, v in row.items() if k != key}
-        return DictStream(self)
+        return self.Stream(self)
 
     def select(self, *args):
         self._transform = lambda row: {k: v for k, v in row.items() if k in args}
-        return DictStream(self)
+        return self.Stream(self)
 
     def groupby(self, key, reduce_fn, init):
         groups = {}
@@ -40,5 +46,5 @@ class DictSet(DictStream, DataSet):
         joiner = defaultdict(dict)
         for element in self + dictset:
             joiner[element[on]].update(element)
-        return DictSet(joiner.values())
+        return self.Set(joiner.values())
 

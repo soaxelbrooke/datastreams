@@ -6,6 +6,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0,parentdir)
 
 from datastreams import DataSet, DataStream
+from dictstreams import DictSet, DictStream
 import unittest
 
 
@@ -63,6 +64,36 @@ class StreamTests(unittest.TestCase):
             lambda nums: map(lambda num: num + 1, nums))
         result = list(concat_mapped)
         self.assertListEqual(result, map(lambda num: num + 1, range(20)))
+
+    def test_set(self):
+        class Brad(object):
+            def __init__(self, name, height, age):
+                self.name = name
+                self.height = height
+                self.age = age
+
+        stream = DataStream([Brad('b-rad', 72, 21)]) \
+            .set('name', lambda row: 'brad')\
+            .set('height', lambda row: 70) \
+            .set('age', lambda row: 30)
+
+        brad = next(stream)
+        self.assertEqual(brad.height, 70)
+        self.assertEqual(brad.name, 'brad')
+        self.assertEqual(brad.age, 30)
+
+
+class DictStreamTests(unittest.TestCase):
+
+    def test_dicstream_set(self):
+        stream = DictStream([{'name': 'brad', 'age': 25}])\
+            .set('height', lambda row: 70)\
+            .set('age', lambda row: 30)
+
+        brad = next(stream)
+        self.assertEqual(brad['height'], 70)
+        self.assertEqual(brad['name'], 'brad')
+        self.assertEqual(brad['age'], 30)
 
 if __name__ == '__main__':
     unittest.main()
