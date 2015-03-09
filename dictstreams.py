@@ -11,21 +11,21 @@ class DictStream(DataStream):
             newrow[key] = transfer_func(row)
             return row
         self._transform = rowset
-        return DataStream(self)
+        return DictStream(self)
 
     def get(self, key):
         def rowget(row):
             return row.get(key)
         self._transform = rowget
-        return DataStream(self)
+        return DictStream(self)
 
     def delete(self, key):
         self._transform = lambda row: {k: v for k, v in row.items() if k != key}
-        return DataStream(self)
+        return DictStream(self)
 
     def select(self, *args):
         self._transform = lambda row: {k: v for k, v in row.items() if k in args}
-        return DataStream(self)
+        return DictStream(self)
 
     def groupby(self, key, reduce_fn, init):
         groups = {}
@@ -40,5 +40,5 @@ class DictSet(DictStream, DataSet):
         joiner = defaultdict(dict)
         for element in self + dictset:
             joiner[element[on]].update(element)
-        return DataSet(joiner.values())
+        return DictSet(joiner.values())
 
