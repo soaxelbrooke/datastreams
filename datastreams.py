@@ -12,6 +12,15 @@ class Datum(object):
 
 
 class DataStream(object):
+
+    @staticmethod
+    def Stream(iterable):
+        return DataStream(iterable)
+
+    @staticmethod
+    def Set(iterable):
+        return DataSet(iterable)
+
     def __init__(self, source):
         self._source = iter(source)
         self._transform = lambda row: row
@@ -24,7 +33,7 @@ class DataStream(object):
         return str(list(self._source))
 
     def __add__(self, other):
-        return DataSet(self._source + other._source)
+        return self.Stream(self._source + other._source)
 
     def next(self):
         while True:
@@ -33,74 +42,64 @@ class DataStream(object):
                 return self._transform(src_next)
 
     def reduce(self, function, initial):
-        return DataSet(reduce(function, self, initial))
+        return self.Set(reduce(function, self, initial))
 
     def map(self, function):
         self._transform = function
-        return DataStream(self)
+        return self.Stream(self)
 
     def concat(self):
-        return DataStream(result for results in self for result in results)
+        return self.Stream(result for results in self for result in results)
 
     def concat_map(self, function):
         return self.map(function).concat()
 
     def filter(self, filter_fn):
         self._predicate = filter_fn
-        return DataStream(self)
+        return self.Stream(self)
 
     def set(self, attr, transfer_func):
         def row_setattr(row):
             new_row = copy(row)
             setattr(new_row, attr, transfer_func(row))
             return new_row
-        self._transform = row_setattr
-        return DataStream(self)
+        return self.map(row_setattr)
 
     def get(self, name, default=None):
         def row_getattr(row):
             return getattr(row, name)
-        self._transform = row_getattr
-        return DataStream(self)
+        return self.map(row_getattr)
 
     def delete(self, key):
         def obj_del(row):
             new_row = copy(row)
             delattr(new_row, key)
             return new_row
-        self._transform = obj_del
-        return DataStream(self)
+        return self.map(obj_del)
 
     def for_each(self, function):
         def apply_fn(row):
             function(row)
             return row
-        self._transform = apply_fn
-        return DataStream(self)
+        return self.map(apply_fn)
 
     def take(self, n):
-        return DataStream(islice(self, 0, n))
+        return self.Stream(islice(self, 0, n))
 
     def take_now(self, n):
-        return DataSet([next(self) for _ in range(n)])
+        return self.Set([next(self) for _ in range(n)])
 
     def drop(self, n):
-        return DataStream(islice(self, n, None))
+        return self.Stream(islice(self, n, None))
 
     def collect(self):
-        return DataSet(self)
+        return self.Set(self)
 
     def collect_as(self, constructor):
-        return DataSet(imap(constructor, self))
+        return self.map(constructor).collect()
 
     def batch(self, batch_size):
-        def batch_iter():
-            while True:
-                try:
-                    yield self.take_now(batch_size)
-                except StopIteration:
-                    break
-        return DataStream(batch_iter())
+        return self.window(batch_size, batch_size)
 
     def window(self, length, interval):
         queue = deque(maxlen=length)
@@ -109,18 +108,18 @@ class DataStream(object):
             while True:
                 try:
                     queue.extend(self.take_now(interval))
-                    yield DataSet(queue)
+                    yield self.Set(queue)
                 except StopIteration:
                     break
-        return DataStream(window_iter())
+        return self.Stream(window_iter())
 
-    @staticmethod
-    def from_csv(path, headers=None, constructor=Datum):
+    @classmethod
+    def from_csv(cls, path, headers=None, constructor=Datum):
         source_file = open(path)
         if headers is None:
             headers = [h.strip() for h in source_file.readline().split(",")]
-        reader = DataStream.iter_csv(source_file)
-        return DataStream(constructor(zip(headers, row)) for row in reader)
+        reader = cls.iter_csv(source_file)
+        return cls.Stream(constructor(zip(headers, row)) for row in reader)
 
     @staticmethod
     def iter_csv(source_file):
@@ -143,10 +142,10 @@ class DataSet(DataStream):
         return self._source[item]
 
     def apply(self, function):
-        return DataSet(function(self))
+        return self.Set(function(self))
 
     def reduce_right(self, function, init):
-        return DataSet(reduce(function, self, init))
+        return self.Set(reduce(function, self, init))
 
     def join(self, how, key, right):
         """ Returns a dataset joined using keys from right dataset only
@@ -217,7 +216,7 @@ class DataSet(DataStream):
         for ele in self:
             for other in joiner[getattr(ele, key)]:
                 joined.append(JoinedObject(ele, other))
-        return DataSet(joined)
+        return self.Set(joined)
 
     def outer_join(self, key, right):
         """ Returns a dataset joined using keys in either datasets
@@ -228,14 +227,14 @@ class DataSet(DataStream):
         raise NotImplementedError
 
     def sort_by(self, key_fn, descending=True):
-        return DataStream(sorted(self._source, key=key_fn, reverse=descending))
+        return self.Stream(sorted(self._source, key=key_fn, reverse=descending))
 
     def reverse(self):
-        return DataStream(element for element in self._source[::-1])
+        return self.Stream(element for element in self._source[::-1])
 
     def stream(self):
-        return DataStream(iter(self))
+        return self.Stream(iter(self))
 
-    @staticmethod
-    def from_csv(path, headers=None, constructor=Datum):
-        return DataSet(DataStream.from_csv(path, headers, constructor))
+    @classmethod
+    def from_csv(cls, path, headers=None, constructor=Datum):
+        return cls.Set(DataStream.from_csv(path, headers, constructor))
