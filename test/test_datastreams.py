@@ -24,6 +24,14 @@ class JoinTests(unittest.TestCase):
 
 class StreamTests(unittest.TestCase):
 
+    def test_read_file(self):
+        stream = DataStream.from_file("test_set_1.csv")
+        self.assertEqual('name,age,height', next(stream).strip())
+        self.assertEqual('carina,27,60', next(stream).strip())
+        self.assertEqual('stuart,27,72', next(stream).strip())
+        self.assertEqual('gatsby,7,24', next(stream).strip())
+        self.assertEqual('john,31,76', next(stream).strip())
+
     def test_read_csv(self):
         stream = DataStream.from_csv("test_set_1.csv")
 

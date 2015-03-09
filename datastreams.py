@@ -114,6 +114,18 @@ class DataStream(object):
                     break
         return DataStream(window_iter())
 
+    @classmethod
+    def from_file(cls, path):
+        source_file = open(path)
+        return DataStream(cls.iter_file(source_file))
+
+    @staticmethod
+    def iter_file(source_file):
+        for line in source_file:
+            yield line
+        source_file.close()
+        raise StopIteration
+
     @staticmethod
     def from_csv(path, headers=None, constructor=Datum):
         source_file = open(path)
