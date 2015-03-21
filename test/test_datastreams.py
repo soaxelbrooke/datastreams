@@ -53,6 +53,14 @@ class JoinTests(unittest.TestCase):
         self.assertIn('max', joined.map(lambda entity: entity.name))
         self.assertNotIn('john', joined.map(lambda entity: entity.name))
 
+    def test_group_by(self):
+        stream = DataStream.from_csv("test_set_2.csv")
+        grouped = stream.group_by('name')
+        groupdict = dict(grouped)
+
+        self.assertEqual(2, len(groupdict['gatsby']))
+        self.assertEqual(1, len(groupdict['carina']))
+
 
 class StreamTests(unittest.TestCase):
 

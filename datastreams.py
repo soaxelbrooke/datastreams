@@ -107,6 +107,23 @@ class DataStream(object):
                     break
         return self.Stream(window_iter())
 
+    def group_by(self, key):
+        """ Groups a stream by key, returning a set of (K, tuple(V))
+        :type key: str
+        :rtype: DataSet
+        """
+        return self.group_by_fn(lambda ele: getattr(ele, key))
+
+    def group_by_fn(self, key_fn):
+        """ Groups a stream by key function, returning a set of (K, [V])
+        :type key_fn: (object) -> object
+        :rtype: DataSet
+        """
+        grouper = defaultdict(list)
+        for ele in self:
+            grouper[key_fn(ele)].append(ele)
+        return self.Set(grouper.viewitems())
+
     @classmethod
     def from_file(cls, path):
         source_file = open(path)
