@@ -124,49 +124,6 @@ class DataStream(object):
             grouper[key_fn(ele)].append(ele)
         return self.Set(grouper.viewitems())
 
-    @classmethod
-    def from_file(cls, path):
-        source_file = open(path)
-        return DataStream(cls.iter_file(source_file))
-
-    @staticmethod
-    def iter_file(source_file):
-        for line in source_file:
-            yield line
-        source_file.close()
-        raise StopIteration
-
-    @classmethod
-    def from_csv(cls, path, headers=None, constructor=Datum):
-        source_file = open(path)
-        if headers is None:
-            headers = [h.strip() for h in source_file.readline().split(",")]
-        reader = cls.iter_csv(source_file)
-        return cls.Stream(constructor(zip(headers, row)) for row in reader)
-
-    @staticmethod
-    def iter_csv(source_file):
-        reader = csv.reader(source_file)
-        for row in reader:
-            yield row
-        source_file.close()
-        raise StopIteration
-
-
-class DataSet(DataStream):
-    def __init__(self, source):
-        super(DataSet, self).__init__(source)
-        self._source = list(source)
-
-    def __len__(self):
-        return len(self._source)
-
-    def __getitem__(self, item):
-        return self._source[item]
-
-    def apply(self, function):
-        return self.Set(function(self))
-
     def join(self, how, key, right):
         """ Returns a dataset joined using keys from right dataset only
         :type how: str
@@ -313,6 +270,49 @@ class DataSet(DataStream):
                         yield JoinedObject(ele, other)
 
         return self.Set(iter_join(left_joiner, right_joiner, keys))
+
+    @classmethod
+    def from_file(cls, path):
+        source_file = open(path)
+        return DataStream(cls.iter_file(source_file))
+
+    @staticmethod
+    def iter_file(source_file):
+        for line in source_file:
+            yield line
+        source_file.close()
+        raise StopIteration
+
+    @classmethod
+    def from_csv(cls, path, headers=None, constructor=Datum):
+        source_file = open(path)
+        if headers is None:
+            headers = [h.strip() for h in source_file.readline().split(",")]
+        reader = cls.iter_csv(source_file)
+        return cls.Stream(constructor(zip(headers, row)) for row in reader)
+
+    @staticmethod
+    def iter_csv(source_file):
+        reader = csv.reader(source_file)
+        for row in reader:
+            yield row
+        source_file.close()
+        raise StopIteration
+
+
+class DataSet(DataStream):
+    def __init__(self, source):
+        super(DataSet, self).__init__(source)
+        self._source = list(source)
+
+    def __len__(self):
+        return len(self._source)
+
+    def __getitem__(self, item):
+        return self._source[item]
+
+    def apply(self, function):
+        return self.Set(function(self))
 
     def sort_by(self, key_fn, descending=True):
         return self.Stream(sorted(self._source, key=key_fn, reverse=descending))
