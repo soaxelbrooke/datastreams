@@ -36,7 +36,7 @@ class DataStream(object):
                 return self._transform(src_next)
 
     def reduce(self, function, initial):
-        return reduce(function, self, initial)
+        return self.Set(reduce(function, self, initial))
 
     def map(self, function):
         self._transform = function

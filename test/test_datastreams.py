@@ -89,8 +89,9 @@ class StreamTests(unittest.TestCase):
 
     def test_reduce(self):
         stream = DataStream(xrange(5))
-        summed = stream.reduce(lambda a, b: a + b, 0)
-        self.assertEqual(summed, sum(range(5)))
+        factorials = stream.map(lambda num: num + 1)\
+            .reduce(lambda facts, num: facts + [num * facts[-1]], [1])[-1]
+        self.assertEqual(factorials, 5*4*3*2*1)
 
     def test_reduce_builtin(self):
         stream = DataStream(xrange(5))
