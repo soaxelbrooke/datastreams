@@ -36,7 +36,7 @@ class DataStream(object):
                 return self._transform(src_next)
 
     def reduce(self, function, initial):
-        return self.Set(reduce(function, self, initial))
+        return reduce(function, self, initial)
 
     def map(self, function):
         self._transform = function
@@ -149,9 +149,6 @@ class DataSet(DataStream):
 
     def apply(self, function):
         return self.Set(function(self))
-
-    def reduce_right(self, function, init):
-        return self.Set(reduce(function, self, init))
 
     def join(self, how, key, right):
         """ Returns a dataset joined using keys from right dataset only
@@ -306,7 +303,7 @@ class DataSet(DataStream):
     def reverse(self):
         return self.Stream(element for element in self._source[::-1])
 
-    def stream(self):
+    def to_stream(self):
         return self.Stream(iter(self))
 
     @classmethod
