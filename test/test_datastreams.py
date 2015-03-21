@@ -22,6 +22,37 @@ class JoinTests(unittest.TestCase):
         self.assertNotIn('max', joined.map(lambda entity: entity.name))
         self.assertNotIn('john', joined.map(lambda entity: entity.name))
 
+    def test_outer_join(self):
+        left = DataSet.from_csv("test_set_1.csv")
+        right = DataSet.from_csv("test_set_2.csv")
+        joined = left.join('outer', 'name', right)
+
+        self.assertIn('max', joined.map(lambda entity: entity.name))
+        self.assertEqual(2, sum(joined.map(lambda entity: entity.name == 'gatsby')))
+        self.assertEqual(1, sum(joined.map(lambda entity: entity.name == 'max')))
+        self.assertIn('max', joined.map(lambda entity: entity.name))
+        self.assertIn('john', joined.map(lambda entity: entity.name))
+
+    def test_left_join(self):
+        left = DataSet.from_csv("test_set_1.csv")
+        right = DataSet.from_csv("test_set_2.csv")
+        joined = left.join('left', 'name', right)
+
+        self.assertEqual(2, sum(joined.map(lambda entity: entity.name == 'gatsby')))
+        self.assertEqual(0, sum(joined.map(lambda entity: entity.name == 'max')))
+        self.assertNotIn('max', joined.map(lambda entity: entity.name))
+        self.assertIn('john', joined.map(lambda entity: entity.name))
+
+    def test_right_join(self):
+        left = DataSet.from_csv("test_set_1.csv")
+        right = DataSet.from_csv("test_set_2.csv")
+        joined = left.join('right', 'name', right)
+
+        self.assertEqual(2, sum(joined.map(lambda entity: entity.name == 'gatsby')))
+        self.assertEqual(1, sum(joined.map(lambda entity: entity.name == 'max')))
+        self.assertIn('max', joined.map(lambda entity: entity.name))
+        self.assertNotIn('john', joined.map(lambda entity: entity.name))
+
 
 class StreamTests(unittest.TestCase):
 

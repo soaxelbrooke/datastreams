@@ -29,12 +29,6 @@ class DataStream(object):
     def __iter__(self):
         return imap(self._transform, ifilter(self._predicate, self._source))
 
-    def __repr__(self):
-        return str(list(self._source))
-
-    def __add__(self, other):
-        return self.Stream(self._source + other._source)
-
     def next(self):
         while True:
             src_next = next(self._source)
@@ -67,7 +61,7 @@ class DataStream(object):
 
     def get(self, name, default=None):
         def row_getattr(row):
-            return getattr(row, name)
+            return getattr(row, name) if hasattr(row, name) else default
         return self.map(row_getattr)
 
     def delete(self, key):
@@ -187,7 +181,17 @@ class DataSet(DataStream):
         :type right: DataSet
         :rtype: DataSet
         """
-        raise NotImplementedError
+        if how == 'left':
+            return self.left_join_by(left_key_fn, right_key_fn, right)
+        elif how == 'right':
+            return self.right_join_by(left_key_fn, right_key_fn, right)
+        elif how == 'inner':
+            return self.inner_join_by(left_key_fn, right_key_fn, right)
+        elif how == 'outer':
+            return self.outer_join_by(left_key_fn, right_key_fn, right)
+        else:
+            raise ValueError("Invalid value for how: {}, must be left, right, "
+                             "inner, or outer.".format(str(how)))
 
     def left_join(self, key, right):
         """ Returns a dataset joined using keys from right dataset only
@@ -195,17 +199,24 @@ class DataSet(DataStream):
         :type key: str
         :rtype: DataSet
         """
-        return self.left_join_by(
-            lambda row: getattr(row, key), lambda row: getattr(row, key), right)
+        key_fn = lambda ele: getattr(ele, key)
+        return self.left_join_by(key_fn, key_fn, right)
 
     def left_join_by(self, left_key_fn, right_key_fn, right):
+        """ Returns a dataset joined using key functions to evaluate equality
+        :type left_key_fn: (object) -> object
+        :type right_key_fn: (object) -> object
+        :type right: DataSet
+        :rtype: DataSet
         """
-        :param left_key_fn:
-        :param right_key_fn:
-        :param right:
-        :return:
-        """
-        raise NotImplementedError
+        joiner = defaultdict(list)
+        for ele in right:
+            joiner[right_key_fn(ele)].append(ele)
+        joined = []
+        for ele in self:
+            for other in joiner.get(left_key_fn(ele), [None]):
+                joined.append(JoinedObject(ele, other))
+        return self.Set(joined)
 
     def right_join(self, key, right):
         """ Returns a dataset joined using keys in right dataset only
@@ -213,7 +224,24 @@ class DataSet(DataStream):
         :type key: str
         :rtype: DataSet
         """
-        raise NotImplementedError
+        key_fn = lambda ele: getattr(ele, key)
+        return self.right_join_by(key_fn, key_fn, right)
+
+    def right_join_by(self, left_key_fn, right_key_fn, right):
+        """ Returns a dataset joined using key functions to evaluate equality
+        :type left_key_fn: (object) -> object
+        :type right_key_fn: (object) -> object
+        :type right: DataSet
+        :rtype: DataSet
+        """
+        joiner = defaultdict(list)
+        for ele in self:
+            joiner[left_key_fn(ele)].append(ele)
+        joined = []
+        for ele in right:
+            for other in joiner.get(right_key_fn(ele), [None]):
+                joined.append(JoinedObject(ele, other))
+        return self.Set(joined)
 
     def inner_join(self, key, right):
         """ Returns a dataset joined using keys in both dataset only
@@ -221,12 +249,22 @@ class DataSet(DataStream):
         :type key: str
         :rtype: DataSet
         """
+        key_fn = lambda ele: getattr(ele, key)
+        return self.inner_join_by(key_fn, key_fn, right)
+
+    def inner_join_by(self, left_key_fn, right_key_fn, right):
+        """ Returns a dataset joined using key functions to evaluate equality
+        :type left_key_fn: (object) -> object
+        :type right_key_fn: (object) -> object
+        :type right: DataSet
+        :rtype: DataSet
+        """
         joiner = defaultdict(list)
         for ele in right:
-            joiner[getattr(ele, key)].append(ele)
+            joiner[right_key_fn(ele)].append(ele)
         joined = []
         for ele in self:
-            for other in joiner[getattr(ele, key)]:
+            for other in joiner[left_key_fn(ele)]:
                 joined.append(JoinedObject(ele, other))
         return self.Set(joined)
 
@@ -236,7 +274,31 @@ class DataSet(DataStream):
         :type key: str
         :rtype: DataSet
         """
-        raise NotImplementedError
+        key_fn = lambda ele: getattr(ele, key)
+        return self.outer_join_by(key_fn, key_fn, right)
+
+    def outer_join_by(self, left_key_fn, right_key_fn, right):
+        """ Returns a dataset joined using key functions to evaluate equality
+        :type left_key_fn: (object) -> object
+        :type right_key_fn: (object) -> object
+        :type right: DataSet
+        :rtype: DataSet
+        """
+        left_joiner = defaultdict(list)
+        for ele in self:
+            left_joiner[left_key_fn(ele)].append(ele)
+        right_joiner = defaultdict(list)
+        for ele in right:
+            right_joiner[right_key_fn(ele)].append(ele)
+        keys = set(left_joiner.keys() + right_joiner.keys())
+
+        def iter_join(l, r, join_keys):
+            for join_key in join_keys:
+                for ele in l.get(join_key, [None]):
+                    for other in r.get(join_key, [None]):
+                        yield JoinedObject(ele, other)
+
+        return self.Set(iter_join(left_joiner, right_joiner, keys))
 
     def sort_by(self, key_fn, descending=True):
         return self.Stream(sorted(self._source, key=key_fn, reverse=descending))
