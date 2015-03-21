@@ -25,6 +25,23 @@ class JoinTests(unittest.TestCase):
 
 class StreamTests(unittest.TestCase):
 
+    def test_map(self):
+        stream = DataStream(xrange(10))
+        stream.map(lambda num: num + 1)
+        self.assertEqual(1, next(stream))
+        self.assertEqual(2, next(stream))
+        self.assertEqual(3, next(stream))
+        self.assertEqual(4, next(stream))
+        self.assertEqual(5, next(stream))
+
+    def test_map_builtin(self):
+        stream = DataStream(xrange(10))
+        updated = map(lambda num: num + 1, stream)
+        self.assertEqual(len(updated), 10)
+        self.assertEqual(updated[0], 1)
+        self.assertEqual(updated[1], 2)
+        self.assertEqual(updated[2], 3)
+
     def test_read_file(self):
         stream = DataStream.from_file("test_set_1.csv")
         self.assertEqual('name,age,height', next(stream).strip())
