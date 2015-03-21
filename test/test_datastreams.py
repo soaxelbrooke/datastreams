@@ -73,6 +73,30 @@ class StreamTests(unittest.TestCase):
         self.assertEqual(updated[1], 2)
         self.assertEqual(updated[2], 3)
 
+    def test_filter(self):
+        stream = DataStream(xrange(14))
+        odds = stream.filter(lambda num: num % 2)
+        self.assertEqual(next(odds), 1)
+        self.assertEqual(next(odds), 3)
+        self.assertEqual(next(odds), 5)
+
+    def test_filter_builtin(self):
+        stream = DataStream(xrange(14))
+        odds = filter(lambda num: num % 2, stream)
+        self.assertEqual(odds[0], 1)
+        self.assertEqual(odds[1], 3)
+        self.assertEqual(odds[2], 5)
+
+    def test_reduce(self):
+        stream = DataStream(xrange(5))
+        summed = stream.reduce(lambda a, b: a + b, 0)
+        self.assertEqual(summed, sum(range(5)))
+
+    def test_reduce_builtin(self):
+        stream = DataStream(xrange(5))
+        summed = reduce(lambda a, b: a + b, stream, 0)
+        self.assertEqual(summed, sum(range(5)))
+
     def test_read_file(self):
         stream = DataStream.from_file("test_set_1.csv")
         self.assertEqual('name,age,height', next(stream).strip())
@@ -105,6 +129,13 @@ class StreamTests(unittest.TestCase):
         self.assertLessEqual(next(windowed), [6, 7, 8])
         self.assertLessEqual(next(windowed), [8, 9, 10])
 
+    def test_concat(self):
+        stream = DataStream([[], [1], [2, 3]])
+        flattened = stream.concat()
+        self.assertEqual(next(flattened), 1)
+        self.assertEqual(next(flattened), 2)
+        self.assertEqual(next(flattened), 3)
+
     def test_concat_map(self):
         stream = DataStream(xrange(20))
         batched = stream.batch(4)
@@ -112,6 +143,27 @@ class StreamTests(unittest.TestCase):
             lambda nums: map(lambda num: num + 1, nums))
         result = list(concat_mapped)
         self.assertListEqual(result, map(lambda num: num + 1, range(20)))
+
+    def test_for_each(self):
+        stream = DataStream(xrange(20))
+        not_changed = stream.for_each(lambda num: num + 1)
+        self.assertEqual(next(not_changed), 0)
+        self.assertEqual(next(not_changed), 1)
+        self.assertEqual(next(not_changed), 2)
+
+    def test_take_now(self):
+        stream = DataStream(xrange(13))
+        not_iter = stream.take_now(5)
+        self.assertEqual(len(not_iter), 5)
+        self.assertEqual(not_iter[0], 0)
+
+    def test_drop_take(self):
+        stream = DataStream(xrange(10))
+        second_half = stream.drop(5).take(5)
+        self.assertEqual(next(second_half), 5)
+        self.assertEqual(next(second_half), 6)
+        self.assertEqual(next(second_half), 7)
+        self.assertEqual(next(second_half), 8)
 
     def test_set(self):
         class Brad(object):
