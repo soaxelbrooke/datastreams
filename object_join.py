@@ -19,6 +19,10 @@ class JoinedObject(object):
             self.left.__class__.__name__ + self.right.__class__.__name__,
             id(self))
 
+    def __dir__(self):
+        attrs = list(set(dir(self.left) + dir(self.right) + ['left', 'right']))
+        return sorted(attrs)
+
     def get_from_sources(self, attr):
         if hasattr(self.left, attr):
             return getattr(self.left, attr)
@@ -28,4 +32,4 @@ class JoinedObject(object):
             raise AttributeError(
                 "Neither of joined object's parents ({}, {}), have attribute "
                 "'{}'".format(self.left.__class__.__name__,
-                              self.left.__class__.__name__, attr))
+                              self.right.__class__.__name__, attr))
