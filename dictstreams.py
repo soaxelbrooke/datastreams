@@ -28,12 +28,12 @@ class DictStream(DataStream):
         return self.map(rowget)
 
     def delete(self, key):
-        self._transform = lambda row: {k: v for k, v in row.items() if k != key}
-        return self.Stream(self)
+        transform = lambda row: {k: v for k, v in row.items() if k != key}
+        return self.Stream(self, transform=transform)
 
     def select(self, *args):
-        self._transform = lambda row: {k: v for k, v in row.items() if k in args}
-        return self.Stream(self)
+        transform = lambda row: {k: v for k, v in row.items() if k in args}
+        return self.Stream(self, transform=transform)
 
     def groupby(self, key, reduce_fn, init):
         groups = {}
@@ -43,10 +43,5 @@ class DictStream(DataStream):
 
 
 class DictSet(DictStream, DataSet):
-
-    def join(self, on, dictset):
-        joiner = defaultdict(dict)
-        for element in self + dictset:
-            joiner[element[on]].update(element)
-        return self.Set(joiner.values())
+    pass  # TODO implement dict inner/outer joins
 
