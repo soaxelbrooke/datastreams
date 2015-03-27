@@ -94,6 +94,13 @@ class StreamTests(unittest.TestCase):
         doubled = list(posset.map(lambda num: num * 2))
         self.assertEqual(len(doubled), len(posset))
 
+    def test_filters(self):
+        stream = DataStream(xrange(14))
+        odd_filter = lambda num: num % 2 != 0
+        gt5filter = lambda num: num > 5
+        filtered = list(stream.filters([odd_filter, gt5filter]))
+        self.assertListEqual(filtered, [7, 9, 11, 13])
+
     def test_filter_builtin(self):
         stream = DataStream(xrange(14))
         odds = filter(lambda num: num % 2, stream)
@@ -186,6 +193,18 @@ class StreamTests(unittest.TestCase):
         self.assertEqual(dict(counts)['l'], 3)
         self.assertEqual(dict(counts)['e'], 1)
         self.assertEqual(dict(counts)['!'], 1)
+
+    def test_to_dict(self):
+        stream = DataStream("Hello, world!")
+        counts = stream.count_frequency().to_dict()
+        self.assertEqual(counts['l'], 3)
+        self.assertEqual(counts['e'], 1)
+        self.assertEqual(counts['!'], 1)
+
+    def test_to_list(self):
+        stream = DataStream(range(20))
+        streamlist = stream.to_list()
+        self.assertLessEqual(streamlist, range(20))
 
     def test_set(self):
         class Brad(object):

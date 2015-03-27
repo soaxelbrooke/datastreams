@@ -54,6 +54,10 @@ class DataStream(object):
     def filter(self, filter_fn):
         return self.Stream(self, predicate=filter_fn)
 
+    def filters(self, filter_fns):
+        predicate = lambda row: all([pred(row) for pred in filter_fns])
+        return self.Stream(self, predicate=predicate)
+
     def set(self, attr, transfer_func):
         def row_setattr(row):
             new_row = copy(row)
@@ -125,6 +129,12 @@ class DataStream(object):
         for ele in self:
             grouper[key_fn(ele)].append(ele)
         return self.Set(grouper.viewitems())
+
+    def to_dict(self):
+        return dict(self)
+
+    def to_list(self):
+        return list(self)
 
     def count_frequency(self):
         def count_reducer(count, row):
