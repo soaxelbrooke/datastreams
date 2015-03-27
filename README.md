@@ -66,10 +66,10 @@ transactstream = DataStream(transactions)
 
 user_spend = userstream.join('inner', 'user_id', transactstream)\
     .group_by('user_id')\
-    .map(lambda usertrans: (usertrans[0].name, sum(tran.price for tran in usertrans[1])))\
+    .map(lambda usertrans: (usertrans[0], sum(tran.price for tran in usertrans[1])))\
     .to_dict()
     
-# {'Bob': 240.95, 'Mary': 40.73, ...} 
+# {'47328129': 240.95, '48190234': 40.73, ...} 
 ```
 
 
