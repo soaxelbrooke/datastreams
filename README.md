@@ -16,14 +16,14 @@ A streaming library to make your data processing beautiful and succinct.
 
 ## Why
 
-Inspiration for this library came when drudging through ETL/feature engineering tasks.  The data being processed is large, and requiring a lot of cleanup/coercion, and making it reliable and performant usually meant sacrificing code clarity and brevity.
+Inspiration for this library came when drudging through ETL/feature engineering tasks.  The data being processed was large, and requiring a lot of cleanup/coercion, and making it reliable and performant usually meant sacrificing code clarity and brevity.
   
-Through this I learned that these tasks, and many others, could be better modeled as a series of filters, transforms, and reductions and be much clearer and easier to optimize.  DataStreams is the summation of that learning, and is evolving into a new way to implement succinct, performant ETL tasks.
+These tasks, and many others, can be better modeled as a series of filters, transforms, and reductions, making them clearer and easier to optimize.  DataStreams is the implementation of these ideals, using method chaining and practical functional elements to create elegant, legible, and succinct data pipelines.
 
-DataStreams are:
+DataStreams:
 
-- Fast
-- Succinct
+- Are fast
+- Are succinct
 - Have sane syntax
 - Are just Python
   
