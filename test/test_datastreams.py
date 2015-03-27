@@ -206,6 +206,20 @@ class StreamTests(unittest.TestCase):
         streamlist = stream.to_list()
         self.assertLessEqual(streamlist, range(20))
 
+    def test_to_set(self):
+        stream = DataStream(range(19))
+        range10 = stream\
+            .map(lambda num: abs(num - 9))\
+            .to_set()
+        self.assertSetEqual(range10, set(range(10)))
+
+    def test_dedupe(self):
+        dataset = DataStream(range(19))\
+            .map(lambda num: abs(num - 9)) \
+            .dedupe()
+        self.assertEqual(len(dataset), 10)
+        self.assertLessEqual(list(dataset), range(10))
+
     def test_set(self):
         class Brad(object):
             def __init__(self, name, height, age):

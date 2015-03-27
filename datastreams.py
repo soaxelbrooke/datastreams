@@ -113,6 +113,9 @@ class DataStream(object):
                     break
         return self.Stream(window_iter())
 
+    def dedupe(self):
+        return self.Set(self.to_set())
+
     def group_by(self, key):
         """ Groups a stream by key, returning a set of (K, tuple(V))
         :type key: str
@@ -135,6 +138,9 @@ class DataStream(object):
 
     def to_list(self):
         return list(self)
+
+    def to_set(self):
+        return set(self)
 
     def count_frequency(self):
         def count_reducer(count, row):
