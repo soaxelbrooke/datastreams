@@ -27,17 +27,17 @@ class DataStream(object):
                  transform=lambda row: row,
                  predicate=lambda row: True):
         self._source = iter(source)
-        self._transform = transform
-        self._predicate = predicate
+        self.__transform = transform
+        self.__predicate = predicate
 
     def __iter__(self):
-        return imap(self._transform, ifilter(self._predicate, self._source))
+        return imap(self.__transform, ifilter(self.__predicate, self._source))
 
     def next(self):
         while True:
             src_next = next(self._source)
-            if self._predicate(src_next):
-                return self._transform(src_next)
+            if self.__predicate(src_next):
+                return self.__transform(src_next)
 
     def reduce(self, function, initial):
         return self.Set(reduce(function, self, initial))
