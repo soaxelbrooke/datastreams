@@ -2,7 +2,7 @@ from itertools import imap, islice, ifilter
 from object_join import JoinedObject
 import csv
 from copy import copy
-from collections import defaultdict, deque
+from collections import defaultdict, deque, Counter
 
 
 class Datum(object):
@@ -125,6 +125,11 @@ class DataStream(object):
         for ele in self:
             grouper[key_fn(ele)].append(ele)
         return self.Set(grouper.viewitems())
+
+    def count_frequency(self):
+        def count_reducer(count, row):
+            return count + Counter(row)
+        return self.Set(reduce(count_reducer, self, Counter()).iteritems())
 
     def join(self, how, key, right):
         """ Returns a dataset joined using keys from right dataset only

@@ -180,6 +180,13 @@ class StreamTests(unittest.TestCase):
         self.assertEqual(next(second_half), 7)
         self.assertEqual(next(second_half), 8)
 
+    def test_count_frequency(self):
+        stream = DataStream("Hello, world!")
+        counts = stream.count_frequency()
+        self.assertEqual(dict(counts)['l'], 3)
+        self.assertEqual(dict(counts)['e'], 1)
+        self.assertEqual(dict(counts)['!'], 1)
+
     def test_set(self):
         class Brad(object):
             def __init__(self, name, height, age):
