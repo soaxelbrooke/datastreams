@@ -14,17 +14,21 @@ class Datum(object):
 class DataStream(object):
 
     @staticmethod
-    def Stream(iterable):
-        return DataStream(iterable)
+    def Stream(iterable,
+               transform=lambda row: row,
+               predicate=lambda row: True):
+        return DataStream(iterable, transform=transform, predicate=predicate)
 
     @staticmethod
     def Set(iterable):
         return DataSet(iterable)
 
-    def __init__(self, source):
+    def __init__(self, source,
+                 transform=lambda row: row,
+                 predicate=lambda row: True):
         self._source = iter(source)
-        self._transform = lambda row: row
-        self._predicate = lambda row: True
+        self._transform = transform
+        self._predicate = predicate
 
     def __iter__(self):
         return imap(self._transform, ifilter(self._predicate, self._source))
@@ -39,8 +43,7 @@ class DataStream(object):
         return self.Set(reduce(function, self, initial))
 
     def map(self, function):
-        self._transform = function
-        return self.Stream(self)
+        return self.Stream(self, transform=function)
 
     def concat(self):
         return self.Stream(result for results in self for result in results)
@@ -49,8 +52,7 @@ class DataStream(object):
         return self.map(function).concat()
 
     def filter(self, filter_fn):
-        self._predicate = filter_fn
-        return self.Stream(self)
+        return self.Stream(self, predicate=filter_fn)
 
     def set(self, attr, transfer_func):
         def row_setattr(row):
@@ -271,6 +273,9 @@ class DataStream(object):
 
         return self.Set(iter_join(left_joiner, right_joiner, keys))
 
+    def where(self, name):
+        return FilterRadix(self, name)
+
     @classmethod
     def from_file(cls, path):
         source_file = open(path)
@@ -298,6 +303,82 @@ class DataStream(object):
             yield row
         source_file.close()
         raise StopIteration
+
+
+class FilterRadix(object):
+    def __init__(self, stream, attr_name):
+        self._source = stream
+        self.attr_name = attr_name
+
+    def eq(self, value):
+        def eq_filter(row):
+            return getattr(row, self.attr_name) == value
+        return self._source.filter(eq_filter)
+
+    def neq(self, value):
+        def neq_filter(thing):
+            return getattr(thing, self.attr_name) != value
+        return self._source.filter(neq_filter)
+
+    def gt(self, value):
+        def gt_filter(thing):
+            return getattr(thing, self.attr_name) > value
+        return self._source.filter(gt_filter)
+
+    def gteq(self, value):
+        def gteq_filter(thing):
+            return getattr(thing, self.attr_name) >= value
+        return self._source.filter(gteq_filter)
+
+    def lt(self, value):
+        def lt_filter(thing):
+            return getattr(thing, self.attr_name) < value
+        return self._source.filter(lt_filter)
+
+    def lteq(self, value):
+        def lteq_filter(thing):
+            return getattr(thing, self.attr_name) <= value
+        return self._source.filter(lteq_filter)
+
+    def is_in(self, value):
+        def is_in_filter(thing):
+            return getattr(thing, self.attr_name) in value
+        return self._source.filter(is_in_filter)
+
+    def not_in(self, value):
+        def not_in_filter(thing):
+            return getattr(thing, self.attr_name) not in value
+        return self._source.filter(not_in_filter)
+
+    def isinstance(self, value):
+        def isinstance_filter(thing):
+            return isinstance(getattr(thing, self.attr_name), value)
+        return self._source.filter(isinstance_filter)
+
+    def notinstance(self, value):
+        def notinstance_filter(thing):
+            return not isinstance(getattr(thing, self.attr_name), value)
+        return self._source.filter(notinstance_filter)
+
+    def is_(self, value):
+        def is_filter(thing):
+            return getattr(thing, self.attr_name) is value
+        return self._source.filter(is_filter)
+
+    def is_not(self, value):
+        def is_not_filter(thing):
+            return getattr(thing, self.attr_name) is not value
+        return self._source.filter(is_not_filter)
+
+    def contains(self, value):
+        def contains_filter(thing):
+            return value in getattr(thing, self.attr_name)
+        return self._source.filter(contains_filter)
+
+    def doesnt_contain(self, value):
+        def doesnt_contain_filter(thing):
+            return value not in getattr(thing, self.attr_name)
+        return self._source.filter(doesnt_contain_filter)
 
 
 class DataSet(DataStream):

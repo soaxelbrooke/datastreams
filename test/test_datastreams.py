@@ -66,12 +66,12 @@ class StreamTests(unittest.TestCase):
 
     def test_map(self):
         stream = DataStream(xrange(10))
-        stream.map(lambda num: num + 1)
-        self.assertEqual(1, next(stream))
-        self.assertEqual(2, next(stream))
-        self.assertEqual(3, next(stream))
-        self.assertEqual(4, next(stream))
-        self.assertEqual(5, next(stream))
+        inced = stream.map(lambda num: num + 1)
+        self.assertEqual(1, next(inced))
+        self.assertEqual(2, next(inced))
+        self.assertEqual(3, next(inced))
+        self.assertEqual(4, next(inced))
+        self.assertEqual(5, next(inced))
 
     def test_map_builtin(self):
         stream = DataStream(xrange(10))
@@ -87,6 +87,12 @@ class StreamTests(unittest.TestCase):
         self.assertEqual(next(odds), 1)
         self.assertEqual(next(odds), 3)
         self.assertEqual(next(odds), 5)
+
+        posset = DataStream(xrange(10)).collect()
+        negs = set(posset.filter(lambda num: num < 0))
+        self.assertEqual(len(negs), 0)
+        doubled = list(posset.map(lambda num: num * 2))
+        self.assertEqual(len(doubled), len(posset))
 
     def test_filter_builtin(self):
         stream = DataStream(xrange(14))
@@ -190,6 +196,20 @@ class StreamTests(unittest.TestCase):
         self.assertEqual(brad.height, 70)
         self.assertEqual(brad.name, 'brad')
         self.assertEqual(brad.age, 30)
+
+
+class FilterRadixTests(unittest.TestCase):
+
+    def test_radix_eq(self):
+        stream = DataStream(range(10))
+        just_three = stream.where('real').eq(3)
+        self.assertListEqual(list(just_three), [3])
+
+    def test_radix_is_in(self):
+        stream = DataStream(range(20))
+        some_primes = [1, 2, 3, 5, 7]
+        those_primes = list(stream.where('real').is_in(some_primes))
+        self.assertListEqual(those_primes, some_primes)
 
 
 class DictStreamTests(unittest.TestCase):

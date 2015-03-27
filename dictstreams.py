@@ -6,8 +6,10 @@ from copy import copy
 class DictStream(DataStream):
 
     @staticmethod
-    def Stream(iterable):
-        return DictStream(iterable)
+    def Stream(iterable,
+               transform=lambda row: row,
+               predicate=lambda row: True):
+        return DictStream(iterable, transform=transform, predicate=predicate)
 
     @staticmethod
     def Set(iterable):
