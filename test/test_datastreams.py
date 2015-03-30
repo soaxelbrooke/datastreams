@@ -238,6 +238,18 @@ class StreamTests(unittest.TestCase):
         self.assertEqual(brad.age, 30)
 
 
+class DataSetTests(unittest.TestCase):
+    def test_map(self):
+        stream2 = DataSet(range(10)) \
+            .take_now(5) \
+            .map(lambda num: num + 1)
+        self.assertEqual(1, next(stream2))
+        self.assertEqual(2, next(stream2))
+        self.assertEqual(3, next(stream2))
+        self.assertEqual(4, next(stream2))
+        self.assertEqual(5, next(stream2))
+
+
 class FilterRadixTests(unittest.TestCase):
 
     def test_radix_eq(self):
