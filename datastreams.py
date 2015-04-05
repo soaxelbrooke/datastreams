@@ -45,6 +45,9 @@ class DataStream(object):
     def map(self, function):
         return self.Stream(self, transform=function)
 
+    def map_method(self, method_name, *args, **kwargs):
+        return self.map(lambda row: getattr(row, method_name)(*args, **kwargs))
+
     def concat(self):
         return self.Stream(result for results in self for result in results)
 

@@ -237,6 +237,25 @@ class StreamTests(unittest.TestCase):
         self.assertEqual(brad.name, 'brad')
         self.assertEqual(brad.age, 30)
 
+    def test_map_method(self):
+        class Brad(object):
+            def __init__(self, name, height, age):
+                self.name = name
+                self.height = height
+                self.age = age
+
+            def get_name(self, upper):
+                return self.name.upper() if upper else self.name
+
+        stream = DataStream([Brad('b-rad', 72, 21)]) \
+            .set('name', lambda row: 'brad') \
+            .set('height', lambda row: 70) \
+            .set('age', lambda row: 30)
+
+        BRAD_NAME = next(stream.map_method('get_name', True))
+        self.assertEqual(BRAD_NAME, 'BRAD')
+
+
 
 class DataSetTests(unittest.TestCase):
     def test_map(self):
