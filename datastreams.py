@@ -404,6 +404,31 @@ class FilterRadix(object):
             return value not in getattr(thing, self.attr_name)
         return self._source.filter(doesnt_contain_filter)
 
+    def len_eq(self, value):
+        def len_eq_filter(thing):
+            return len(getattr(thing, self.attr_name)) == value
+        return self._source.filter(len_eq_filter)
+
+    def len_gt(self, value):
+        def len_gt_filter(thing):
+            return len(getattr(thing, self.attr_name)) > value
+        return self._source.filter(len_gt_filter)
+
+    def len_lt(self, value):
+        def len_lt_filter(thing):
+            return len(getattr(thing, self.attr_name)) < value
+        return self._source.filter(len_lt_filter)
+
+    def len_gteq(self, value):
+        def len_gteq_filter(thing):
+            return len(getattr(thing, self.attr_name)) >= value
+        return self._source.filter(len_gteq_filter)
+
+    def len_lteq(self, value):
+        def len_lteq_filter(thing):
+            return len(getattr(thing, self.attr_name)) <= value
+        return self._source.filter(len_lteq_filter)
+
 
 class DataSet(DataStream):
     def __init__(self, source):
