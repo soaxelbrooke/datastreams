@@ -3,6 +3,7 @@ from object_join import JoinedObject
 import csv
 from copy import copy
 from collections import defaultdict, deque, Counter
+import sys
 
 
 class Datum(object):
@@ -144,6 +145,9 @@ class DataStream(object):
 
     def to_set(self):
         return set(self)
+
+    def pipe_to_stdout(self):
+        map(sys.stdout.write, self)
 
     def count_frequency(self):
         def count_reducer(count, row):
@@ -327,6 +331,10 @@ class DataStream(object):
             yield row
         source_file.close()
         raise StopIteration
+
+    @classmethod
+    def from_stdin(cls):
+        return cls.Stream(sys.stdin)
 
 
 class FilterRadix(object):
