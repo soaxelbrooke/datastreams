@@ -46,8 +46,8 @@ class DataStream(object):
     def map(self, function):
         return self.Stream(self, transform=function)
 
-    def map_method(self, method_name, *args, **kwargs):
-        return self.map(lambda row: getattr(row, method_name)(*args, **kwargs))
+    def map_method(self, method, *args, **kwargs):
+        return self.map(lambda row: getattr(row, method)(*args, **kwargs))
 
     def concat(self):
         return self.Stream(result for results in self for result in results)
@@ -61,6 +61,9 @@ class DataStream(object):
     def filters(self, filter_fns):
         predicate = lambda row: all([pred(row) for pred in filter_fns])
         return self.Stream(self, predicate=predicate)
+
+    def filter_method(self, method, *args, **kwargs):
+        return self.filter(lambda row: getattr(row, method)(*args, **kwargs))
 
     def set(self, attr, transfer_func):
         def row_setattr(row):
