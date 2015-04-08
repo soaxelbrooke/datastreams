@@ -1,4 +1,4 @@
-from itertools import imap, islice, ifilter
+from itertools import imap, islice, ifilter, chain
 from object_join import JoinedObject
 import csv
 from copy import copy
@@ -50,10 +50,13 @@ class DataStream(object):
         return self.map(lambda row: getattr(row, method)(*args, **kwargs))
 
     def concat(self):
-        return self.Stream(result for results in self for result in results)
+        return self.chain()
 
     def concat_map(self, function):
         return self.map(function).concat()
+
+    def chain(self):
+        return self.Stream(chain.from_iterable(self))
 
     def filter(self, filter_fn):
         return self.Stream(self, predicate=filter_fn)
