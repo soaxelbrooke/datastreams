@@ -9,7 +9,7 @@ A streaming library to make your data processing beautiful and succinct.
 ...     .filter(lambda char: char.isalpha())\
 ...     .map_method('lower')\
 ...     .count_frequency().to_list()
-[('e', 1), ('d', 1), ('h', 1), ('o', 2), ('l', 3), ('r', 1), ('w', 1)]
+[('e', 2), ('g', 2), ('h', 1), ('l', 2), ('o', 3), ('s', 1), ('r', 1), ('u', 1)]
 ```
 
 ## Why
