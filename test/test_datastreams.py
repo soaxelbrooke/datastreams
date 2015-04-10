@@ -5,7 +5,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0,parentdir)
 
-from datastreams import DataSet, DataStream
+from datastreams import DataSet, DataStream, Datum
 from dictstreams import DictSet, DictStream
 import unittest
 
@@ -281,6 +281,16 @@ class StreamTests(unittest.TestCase):
             .execute()
         self.assertEqual(_test_execute_count, 20)
         del _test_execute_count
+
+    def test_pick_attrs(self):
+        def test_attrs(obj):
+            self.assertIn('b', dir(obj))
+            self.assertNotIn('a', dir(obj))
+
+        DataStream([Datum({'a': 1, 'b': 2}), Datum({'bbb': 0, 'b': 5})])\
+            .pick_attrs(['b'])\
+            .for_each(test_attrs)\
+            .execute()
 
 
 class DataSetTests(unittest.TestCase):

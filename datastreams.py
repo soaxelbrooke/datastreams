@@ -8,8 +8,12 @@ import sys
 
 class Datum(object):
     def __init__(self, attributes):
-        for name, value in attributes:
-            setattr(self, name, value)
+        if isinstance(attributes, dict):
+            for name, value in attributes.iteritems():
+                setattr(self, name, value)
+        else:
+            for name, value in attributes:
+                setattr(self, name, value)
 
 
 class DataStream(object):
@@ -309,6 +313,11 @@ class DataStream(object):
                         yield JoinedObject(ele, other)
 
         return self.Set(iter_join(left_joiner, right_joiner, keys))
+
+    def pick_attrs(self, attr_names):
+        def attr_filter(row):
+            return Datum({name: getattr(row, name) for name in attr_names})
+        return self.map(attr_filter)
 
     def where(self, name):
         return FilterRadix(self, name)
