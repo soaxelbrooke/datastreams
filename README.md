@@ -42,8 +42,11 @@ def calc_age(user):
 DataStream(users)\
     .map(calc_name)\
     .map(calc_age)\
-    .for_each(User.save)
+    .for_each(User.save)\
+    .execute() # <- Nothing happens till here
 ```
+
+Theses calculations are efficient because streams are generators by default, and no memory is wasted on unnecessary intermediary collections.
 
 This is even better when certain calculation steps are long, and must be wrapped in their own functions.  Of course, for brevity, you can use `set`:
 
@@ -51,7 +54,8 @@ This is even better when certain calculation steps are long, and must be wrapped
 DataStream(users)\
     .set('first_name', lambda user: user.name.split(' ')[0] if user.name else '')\
     .set('age', lambda user: datetime.now() - user.birthday)\
-    .for_each(User.save)
+    .for_each(User.save)\
+    .execute()
 ```
 
 ## Joins

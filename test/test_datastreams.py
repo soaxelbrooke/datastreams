@@ -255,6 +255,32 @@ class StreamTests(unittest.TestCase):
         BRAD_NAME = next(stream.map_method('get_name', True))
         self.assertEqual(BRAD_NAME, 'BRAD')
 
+    def test_call(self):
+        global _test_call_passed
+        _test_call_passed = False
+
+        def make_test_pass(dataset):
+            global _test_call_passed
+            _test_call_passed = isinstance(dataset, DataSet)
+
+        DataSet(range(10)).call(make_test_pass)
+        self.assertTrue(_test_call_passed)
+        del _test_call_passed
+
+    def test_execute(self):
+        global _test_execute_count
+        _test_execute_count = 0
+
+        def inc_execute_count(num):
+            global _test_execute_count
+            _test_execute_count += 1
+
+        self.assertEqual(_test_execute_count, 0)
+        DataStream(xrange(20))\
+            .for_each(inc_execute_count)\
+            .execute()
+        self.assertEqual(_test_execute_count, 20)
+        del _test_execute_count
 
 
 class DataSetTests(unittest.TestCase):

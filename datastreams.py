@@ -108,6 +108,9 @@ class DataStream(object):
     def collect_as(self, constructor):
         return self.map(constructor).collect()
 
+    def execute(self):
+        list(self)
+
     def batch(self, batch_size):
         return self.window(batch_size, batch_size)
 
@@ -460,6 +463,10 @@ class DataSet(DataStream):
 
     def apply(self, function):
         return self.Set(function(self))
+
+    def call(self, function):
+        function(self)
+        return self
 
     def sort_by(self, key_fn, descending=True):
         return self.Stream(sorted(self._source, key=key_fn, reverse=descending))
