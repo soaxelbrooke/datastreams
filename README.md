@@ -24,7 +24,10 @@ DataStreams:
 - Are succinct
 - Have sane syntax
 - Are just Python
-  
+
+## Documentation
+
+(http://datastreams.readthedocs.org/en/latest/)[http://datastreams.readthedocs.org/en/latest/]
   
 ## Pipelining With DataStreams
 
