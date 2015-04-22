@@ -101,12 +101,3 @@ DataStream(users)\
 ```
 
 I bet you got tired just _reading_ that many lambdas!
-
-# Influences
-
-- Javascript
-- Spark
-- Java streaming lib
-- Pandas
-- LINQ
-
