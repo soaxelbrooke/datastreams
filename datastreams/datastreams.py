@@ -65,6 +65,12 @@ class DataStream(object):
         return self.__next__()
 
     def reduce(self, function, initial):
+        """ Applying a reducing function to rows in a stream
+
+        :param function function: reducing function, with parameters ``last_iteration``, ``next_value``
+        :param initial: initial value for the reduction
+        :rtype: DataSet
+        """
         return self.Set(reduce(function, self, initial))
 
     def map(self, function):
@@ -577,6 +583,14 @@ class DataStream(object):
 
     @classmethod
     def from_file(cls, path):
+        """ Stream lines from a file
+
+        >>> DataStream.from_file('hamlet.txt').concat_map(str.split).take(7)
+        ... ['The', 'Tragedy', 'of', 'Hamlet,', 'Prince', 'of', 'Denmark']
+
+        :param str path: path to file to be streamed
+        :rtype: DataStream
+        """
         source_file = open(path)
         return DataStream(cls.iter_file(source_file))
 
@@ -589,6 +603,16 @@ class DataStream(object):
 
     @classmethod
     def from_csv(cls, path, headers=None, constructor=Datum):
+        """ Stream rows from a csv file
+
+        >>> DataStream.from_csv('payments.csv').to_list()
+        ... [Datum({'name': 'joe', 'charge': 174.93}), Datum({'name': 'sally', 'charge': 198.05}), ...]
+
+        :param str path: path to csv to be streamed
+        :param list[str] headers: manual names for headers - if present, first row is pulled in as data, if ``None``, first row is used as headers
+        :param constructor: class or function to construct for each row
+        :rtype: DataStream
+        """
         source_file = open(path)
         if headers is None:
             headers = [h.strip() for h in source_file.readline().split(",")]
@@ -605,6 +629,10 @@ class DataStream(object):
 
     @classmethod
     def from_stdin(cls):
+        """ Stream rows from stdin
+
+        :rtype: DataStream
+        """
         return cls.Stream(sys.stdin)
 
 
