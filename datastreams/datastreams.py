@@ -320,8 +320,14 @@ class DataStream(object):
                     break
         return self.Stream(window_iter())
 
-    def dedupe(self):
-        return self.Set(self.to_set())
+    def dedupe(self, key_fn):
+        seen = set([])
+        out = []
+        for row in self:
+            if key_fn(row) not in seen:
+                seen.add(key_fn(row))
+                out.append(row)
+        return self.Set(out)
 
     def group_by(self, key):
         """ Groups a stream by key, returning a :py:class:`DataSet` of ``(K, tuple(V))``

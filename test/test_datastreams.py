@@ -5,8 +5,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0,parentdir)
 
-from datastreams import DataSet, DataStream, Datum
-from dictstreams import DictSet, DictStream
+from datastreams import DataSet, DataStream, Datum, DictSet, DictStream
 import unittest
 try:
     reduce
@@ -218,13 +217,6 @@ class StreamTests(unittest.TestCase):
             .to_set()
         self.assertSetEqual(range10, set(range(10)))
 
-    def test_dedupe(self):
-        dataset = DataStream(range(19))\
-            .map(lambda num: abs(num - 9)) \
-            .dedupe()
-        self.assertEqual(len(dataset), 10)
-        self.assertSequenceEqual(list(dataset), range(10))
-
     def test_set(self):
         class Brad(object):
             def __init__(self, name, height, age):
@@ -296,6 +288,11 @@ class StreamTests(unittest.TestCase):
             .pick_attrs(['b'])\
             .for_each(test_attrs)\
             .execute()
+
+    def test_dedupe(self):
+        stream = DataStream([[0, 1], [0, 2], [1, 1]])
+        deduped = stream.dedupe(lambda row: row[0])
+        self.assertSequenceEqual([[0, 1], [1, 1]], deduped)
 
 
 class DataSetTests(unittest.TestCase):
