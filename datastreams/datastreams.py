@@ -583,7 +583,7 @@ class DataStream(object):
         ... [Person(name='amy', year_born=1987)]
 
         :param str name: attribute name to filter on
-        :rtype: DataStream
+        :rtype: FilterRadix
         """
         return FilterRadix(self, name)
 
