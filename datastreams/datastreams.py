@@ -265,7 +265,15 @@ class DataStream(object):
         return self.map(constructor).collect()
 
     def execute(self):
-        """ Evaluates the stream (nothing happens until a stream is evaluted) """
+        """ Evaluates the stream (nothing happens until a stream is evaluted)
+
+        >>> from pprint import pprint
+        >>> DataStream(range(3)).for_each(pprint).execute()
+        ... 0
+        ... 1
+        ... 2
+        ... <datastreams.DataStream at 0x7f6995ea4790>
+        """
         list(self)
 
     def batch(self, batch_size):

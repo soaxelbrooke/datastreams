@@ -52,6 +52,78 @@
   <div class="section" id="datastreams">
 <h1>datastreams<a class="headerlink" href="#datastreams" title="Permalink to this headline">¶</a></h1>
 <p>Efficient, concise stream data processing.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">datastreams</span> <span class="kn">import</span> <span class="n">DataStream</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="s">&quot;Hello, gorgeous.&quot;</span><span class="p">)</span>\
+<span class="gp">... </span>    <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">char</span><span class="p">:</span> <span class="n">char</span><span class="o">.</span><span class="n">isalpha</span><span class="p">())</span>\
+<span class="gp">... </span>    <span class="o">.</span><span class="n">map_method</span><span class="p">(</span><span class="s">&#39;lower&#39;</span><span class="p">)</span>\
+<span class="gp">... </span>    <span class="o">.</span><span class="n">count_frequency</span><span class="p">()</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="go">[(&#39;e&#39;, 2), (&#39;g&#39;, 2), (&#39;h&#39;, 1), (&#39;l&#39;, 2), (&#39;o&#39;, 3), (&#39;s&#39;, 1), (&#39;r&#39;, 1), (&#39;u&#39;, 1)]</span>
+</pre></div>
+</div>
+<div class="section" id="pipelining">
+<h2>Pipelining<a class="headerlink" href="#pipelining" title="Permalink to this headline">¶</a></h2>
+<p>DataStreams are perfect for pipelined feature calculation:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">calc_name</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+    <span class="n">user</span><span class="o">.</span><span class="n">first_name</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">user</span>
+
+<span class="k">def</span> <span class="nf">calc_age</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+   <span class="n">user</span><span class="o">.</span><span class="n">age</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">user</span><span class="o">.</span><span class="n">birthday</span>
+   <span class="k">return</span> <span class="n">user</span>
+
+<span class="n">DataStream</span><span class="p">(</span><span class="n">users</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">calc_name</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">calc_age</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">for_each</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">save</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">execute</span><span class="p">()</span> <span class="c"># &lt;- Nothing happens till here</span>
+</pre></div>
+</div>
+<p>Theses calculations are efficient because streams are generators by default, and no memory is wasted on unnecessary intermediary collections.</p>
+<p>This is even better when certain calculation steps are long, and must be wrapped in their own functions.  Of course, for brevity, you can use <cite>set</cite>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">DataStream</span><span class="p">(</span><span class="n">users</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;first_name&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">user</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s">&#39;age&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">user</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">user</span><span class="o">.</span><span class="n">birthday</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">for_each</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">save</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="joins">
+<h2>Joins<a class="headerlink" href="#joins" title="Permalink to this headline">¶</a></h2>
+<p>You can join <code class="xref py py-class docutils literal"><span class="pre">DataStream</span></code> - even streams of objects!</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">userstream</span> <span class="o">=</span> <span class="n">DataStream</span><span class="p">(</span><span class="n">users</span><span class="p">)</span>
+<span class="n">transactstream</span> <span class="o">=</span> <span class="n">DataStream</span><span class="p">(</span><span class="n">transactions</span><span class="p">)</span>
+
+<span class="n">user_spend</span> <span class="o">=</span> <span class="n">userstream</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;inner&#39;</span><span class="p">,</span> <span class="s">&#39;user_id&#39;</span><span class="p">,</span> <span class="n">transactstream</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="s">&#39;user_id&#39;</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">usertrans</span><span class="p">:</span> <span class="p">(</span><span class="n">usertrans</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">sum</span><span class="p">(</span><span class="n">tran</span><span class="o">.</span><span class="n">price</span> <span class="k">for</span> <span class="n">tran</span> <span class="ow">in</span> <span class="n">usertrans</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>\
+    <span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+
+<span class="c"># {&#39;47328129&#39;: 240.95, &#39;48190234&#39;: 40.73, ...}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="where-clause">
+<h2><code class="docutils literal"><span class="pre">where</span></code> Clause<a class="headerlink" href="#where-clause" title="Permalink to this headline">¶</a></h2>
+<p>Chained <cite>filter`s are a bit tiresome. `where</cite> lets you perform simple filtering using more accessible language:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">DataStream</span><span class="p">(</span><span class="n">users</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s">&#39;age&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">gteq</span><span class="p">(</span><span class="mi">18</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s">&#39;age&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lt</span><span class="p">(</span><span class="mi">35</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s">&#39;segment&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">is_in</span><span class="p">(</span><span class="n">target_segments</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">for_each</span><span class="p">(</span><span class="n">do_something</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Instead of:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">DataStream</span><span class="p">(</span><span class="n">users</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">user</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">age</span> <span class="o">&gt;=</span> <span class="mi">18</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">user</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">age</span> <span class="o">&lt;</span> <span class="mi">35</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">user</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">segment</span> <span class="ow">in</span> <span class="n">target_segments</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">for_each</span><span class="p">(</span><span class="n">do_something</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>I bet you got tired just _reading_ that many lambdas!</p>
+</div>
 <div class="section" id="module-datastreams">
 <span id="datastream"></span><h2>DataStream<a class="headerlink" href="#module-datastreams" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -227,6 +299,14 @@ map/filter/reduce/etc style operations together:</p>
 <dt id="datastreams.DataStream.execute">
 <code class="descname">execute</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.execute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluates the stream (nothing happens until a stream is evaluted)</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">for_each</span><span class="p">(</span><span class="n">pprint</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+<span class="gp">... </span><span class="mi">0</span>
+<span class="gp">... </span><span class="mi">1</span>
+<span class="gp">... </span><span class="mi">2</span>
+<span class="gp">... </span><span class="o">&lt;</span><span class="n">datastreams</span><span class="o">.</span><span class="n">DataStream</span> <span class="n">at</span> <span class="mh">0x7f6995ea4790</span><span class="o">&gt;</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -958,6 +1038,9 @@ hashable types to be used to compare/index dicts.</p>
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">datastreams</a><ul>
+<li><a class="reference internal" href="#pipelining">Pipelining</a></li>
+<li><a class="reference internal" href="#joins">Joins</a></li>
+<li><a class="reference internal" href="#where-clause"><code class="docutils literal"><span class="pre">where</span></code> Clause</a></li>
 <li><a class="reference internal" href="#module-datastreams">DataStream</a></li>
 <li><a class="reference internal" href="#dataset">DataSet</a></li>
 <li><a class="reference internal" href="#contribute">Contribute</a></li>
