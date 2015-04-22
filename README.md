@@ -27,7 +27,7 @@ DataStreams:
 
 ## Documentation
 
-(http://datastreams.readthedocs.org/en/latest/)[http://datastreams.readthedocs.org/en/latest/]
+http://datastreams.readthedocs.org/en/latest/
   
 ## Pipelining With DataStreams
 
