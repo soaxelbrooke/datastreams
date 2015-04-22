@@ -19,10 +19,19 @@ class Datum(object):
                 setattr(self, name, value)
 
     def __repr__(self):
-        return str(self.__dict__)
+        return "Datum({})".format(self.__dict__)
 
 
 class DataStream(object):
+    """ Foundation for the package - :py:class:`DataStream` allows you to chain
+    map/filter/reduce/etc style operations together:
+
+    >>> stream = DataStream(range(10))
+    >>> stream.filter(lambda n: n % 2 == 0).map(lambda n: n*5).to_list()
+    ... [0, 10, 20, 30, 40]
+
+    DataStreams are evaluated lazily (using generators), providing memory efficiency and speed.  Using :py:func:`collect` produces a :py:class:`DataSet`, which evalutes the whole stream and caches the result.
+    """
 
     @staticmethod
     def Stream(iterable,
@@ -59,77 +68,227 @@ class DataStream(object):
         return self.Set(reduce(function, self, initial))
 
     def map(self, function):
+        """ Apply a function to each row in this stream
+
+        >>> DataStream(range(5)).map(lambda n: n * 5).to_list()
+        ... [0, 5, 10, 15, 20]
+
+        :param function function: function to apply
+        :rtype: DataStream
+        """
         return self.Stream(self, transform=function)
 
     def map_method(self, method, *args, **kwargs):
+        """ Call named method of each row using supplied args/kwargs
+
+        >>> DataStream(['hi', 'hey', 'yo']).map_method('upper').to_list()
+        ... ['HI', 'HEY', 'YO']
+
+        :param str method: name of method to be called
+        :rtype: DataStream
+        """
         return self.map(lambda row: getattr(row, method)(*args, **kwargs))
 
     def concat(self):
+        """ Alias for :py:func:`chain`
+
+        >>> DataStream(['this', 2, None]).map(dir).concat().to_list()
+        ... ['__add__', '__class__', '__contains__', '__delattr__', ...]
+
+        :rtype: DataStream
+        """
         return self.chain()
 
     def concat_map(self, function):
+        """ :py:func:`map` a function over the stream, then concat it
+
+        >>> DataStream(['this', 2, None]).concat_map(dir).to_list()
+        ... ['__add__', '__class__', '__contains__', '__delattr__', ...]
+
+        :param function function: function to apply
+        :rtype: DataStream
+        """
         return self.map(function).concat()
 
     def chain(self):
+        """ Chains together iterables, flattening them
+
+        >>> DataStream(['this', 2, None]).map(dir).chain().to_list()
+        ... ['__add__', '__class__', '__contains__', '__delattr__', ...]
+
+        :rtype: DataStream
+        """
         return self.Stream(chain.from_iterable(self))
 
     def filter(self, filter_fn):
+        """ Filters a stream using the passed in predicate function.
+
+        >>> DataStream(range(10)).filter(lambda n: n % 2 == 0).to_list()
+        ... [0, 2, 4, 6, 8]
+
+        :param function filter_fn: only passes values for which filter_fn returns ``True``
+        :rtype: DataStream
+        """
         return self.Stream(self, predicate=filter_fn)
 
     def filters(self, filter_fns):
+        """ Apply a list of filter functions
+
+        >>> filter1 = lambda n: n < 6
+        >>> filter2 = lambda n: n % 2 == 0
+        >>> DataStream(range(10)).filters([filter1, filter2]).to_list()
+        ... [0, 2, 4]
+
+        :param list[function] filter_fns: list of filter functions
+        :rtype: DataStream
+        """
         predicate = lambda row: all([pred(row) for pred in filter_fns])
         return self.Stream(self, predicate=predicate)
 
     def filter_method(self, method, *args, **kwargs):
+        """ Filters using a method of the stream row using passed in args/kwargs
+
+        >>> DataStream(['hi', 'h1', 'ho']).filter_method('isalpha').to_list()
+        ... ['hi', 'ho']
+
+        :param str method: name of method to be called
+        :rtype: DataStream
+        """
         return self.filter(lambda row: getattr(row, method)(*args, **kwargs))
 
     def set(self, attr, transfer_func):
+        """ Sets the named attribute of each row in the stream using the supplied function
+
+        :param  attr: attribute name
+        :param transfer_func: function that takes the row and returns the value to be stored at the named attribute
+        :rtype: DataStream
+        """
         def row_setattr(row):
             new_row = copy(row)
             setattr(new_row, attr, transfer_func(row))
             return new_row
         return self.map(row_setattr)
 
-    def get(self, name, default=None):
+    def get(self, attr, default=None):
+        """ Gets the named attribute of each row in the stream
+
+        >>> Person = namedtuple('Person', ['name', 'year_born'])
+        >>> DataStream([Person('amy', 1987), Person('brad', 1980)]).get('year_born').to_list()
+        ... [1987, 1980]
+
+        :param str attr: attribute name
+        :param default: default value to use if attr name not found in row
+        :rtype: DataStream
+        """
         def row_getattr(row):
-            return getattr(row, name) if hasattr(row, name) else default
+            return getattr(row, attr) if hasattr(row, attr) else default
         return self.map(row_getattr)
 
-    def delete(self, key):
+    def delete(self, attr):
+        """ Deletes the named attribute for each row in the stream """
         def obj_del(row):
             new_row = copy(row)
-            delattr(new_row, key)
+            delattr(new_row, attr)
             return new_row
         return self.map(obj_del)
 
     def for_each(self, function):
+        """ Calls a function for each row in the stream, but passes the row value through
+
+        >>> from pprint import pprint
+        >>> DataStream(range(3)).for_each(pprint).execute()
+        ... 0
+        ... 1
+        ... 2
+        ... <datastreams.DataStream at 0x7f6995ea4790>
+
+        :param function function: function to call on each row
+        :rtype: DataStream
+        """
         def apply_fn(row):
             function(row)
             return row
         return self.map(apply_fn)
 
     def take(self, n):
+        """ Takes n rows from the stream
+
+        >>> DataStream(range(100000)).take(3).to_list()
+        ... [0, 1, 2]
+
+        :param int n: number of rows to be taken
+        :rtype: DataStream
+        """
         return self.Stream(islice(self, 0, n))
 
     def take_now(self, n):
+        """ Like take, but evaluates immediately and returns a :py:class:`DataSet`
+
+        >>> DataStream(range(100000)).take_now(3)
+        ... DataSet([0, 1, 2])
+
+        :param int n: number of rows to be taken
+        :rtype: DataSet
+        """
         return self.Set([next(self) for _ in range(n)])
 
     def drop(self, n):
+        """ Drops n rows from the stream
+
+        >>> DataStream(range(10)).drop(5).to_list()
+        ... [5, 6, 7, 8, 9]
+
+        :param int n: number of rows to be dropped
+        :rtype: DataStream
+        """
         return self.Stream(islice(self, n, None))
 
     def collect(self):
+        """ Collects the stream into a :py:class:`DataSet`
+
+        >>> DataStream(range(5)).map(lambda n: n * 5).collect()
+        ... DataSet([0, 5, 10, 15, 20])
+
+        :rtype: DataSet
+        """
         return self.Set(self)
 
     def collect_as(self, constructor):
+        """ Collects using a constructor
+
+        >>> DataStream(range(5)).collect_as(str)
+        ... DataSet(['0', '1', '2', '3', '4'])
+
+        :param constructor: class or constructor function
+        :rtype: DataSet
+        """
         return self.map(constructor).collect()
 
     def execute(self):
+        """ Evaluates the stream (nothing happens until a stream is evaluted) """
         list(self)
 
     def batch(self, batch_size):
+        """ Batches rows of a stream in a given chunk size
+
+        >>> DataStream(range(10)).batch(2).to_list()
+        ... [[0, 1], [2, 3], [4, 5], [6, 7], [8, 9]]
+
+        :param int batch_size: size of each batch
+        :rtype: DataStream
+        """
         return self.window(batch_size, batch_size)
 
     def window(self, length, interval):
+        """ Windows the rows of a stream in a given length and interval
+
+        >>> DataStream(range(5)).window(3, 2).to_list()
+        ... [DataSet([0, 1, 2]), DataSet([2, 3, 4])]
+
+        :param int length: length of window
+        :param int interval: distance between windows
+        :rtype: DataStream
+        """
         queue = deque(maxlen=length)
 
         def window_iter():
@@ -151,15 +310,25 @@ class DataStream(object):
         return self.Set(self.to_set())
 
     def group_by(self, key):
-        """ Groups a stream by key, returning a set of (K, tuple(V))
-        :type key: str
+        """ Groups a stream by key, returning a :py:class:`DataSet` of ``(K, tuple(V))``
+
+        >>> stream = DataStream(range(3) * 3)
+        >>> stream.group_by('real').to_dict()
+        ... {0: (0, 0, 0), 1: (1, 1, 1), 2: (2, 2, 2)}
+
+        :param str key: attribute name to group by
         :rtype: DataSet
         """
         return self.group_by_fn(lambda ele: getattr(ele, key))
 
     def group_by_fn(self, key_fn):
-        """ Groups a stream by key function, returning a set of (K, [V])
-        :type key_fn: (object) -> object
+        """ Groups a stream by function, returning a :py:class:`DataSet` of ``(K, tuple(V))``
+
+        >>> stream = DataStream(['hi', 'hey', 'yo', 'sup'])
+        >>> stream.group_by_fn(lambda w: len(w)).to_dict()
+        ... {2: ('hi', 'yo'), 3: ('hey', 'sup')}
+
+        :param function key_fn: key function returning hashable value to group by
         :rtype: DataSet
         """
         grouper = defaultdict(list)
@@ -168,27 +337,58 @@ class DataStream(object):
         return self.Set(grouper.items())
 
     def to_dict(self):
+        """ Converts a stream to a :py:class:`dict`
+
+        >>> stream = DataStream(['hi', 'hey', 'yo', 'sup'])
+        >>> stream.group_by_fn(lambda w: len(w)).to_dict()
+        ... {2: ('hi', 'yo'), 3: ('hey', 'sup')}
+
+        :rtype: dict
+        """
         return dict(self.collect())
 
     def to_list(self):
+        """ Converts a stream to a :py:class:`list`
+
+        >>> DataStream(range(5)).map(lambda n: n * 5).to_list()
+        ... [0, 5, 10, 15, 20]
+
+        :rtype: list
+        """
         return list(self.collect())
 
     def to_set(self):
+        """ Converts a stream to a :py:class:`set`
+
+        >>> DataStream([1, 2, 3, 4, 2, 3]).to_set()
+        ... {1, 2, 3, 4}
+
+        :rtype: set
+        """
         return set(self.collect())
 
     def pipe_to_stdout(self):
+        """ Pipes stream to stdout using ``sys.stdout.write`` """
         map(sys.stdout.write, self)
 
     def count_frequency(self):
+        """ Counts frequency of each row in the stream
+
+        >>> DataStream(['a', 'a', 'b', 'c']).count_frequency()
+        ... DataSet([('a', 2), ['b', 1], ['c', 1]])
+
+        :rtype: DataSet
+        """
         def count_reducer(count, row):
             return count + Counter(row)
         return self.Set(reduce(count_reducer, self, Counter()).items())
 
     def join(self, how, key, right):
         """ Returns a dataset joined using keys from right dataset only
-        :type how: str
-        :type right: DataSet
-        :type key: str
+
+        :param str how: ``left``, ``right``, ``outer``, or ``inner``
+        :param DataStream right: :py:class:`DataStream` to be joined with
+        :param str key: attribute name to join on
         :rtype: DataSet
         """
         if how == 'left':
@@ -206,10 +406,11 @@ class DataStream(object):
     def join_by(self, how, left_key_fn, right_key_fn, right):
         """ Uses two key functions perform a join.  Key functions should produce
         hashable types to be used to compare/index dicts.
-        :type how: str
-        :type left_key_fn: (object) -> object
-        :type right_key_fn: (object) -> object
-        :type right: DataSet
+
+        :param str how: ``left``, ``right``, ``outer``, or ``inner``
+        :param DataStream right: :py:class:`DataStream` to be joined with
+        :param function left_key_fn: key function that produces a hashable value from left stream
+        :param function right_key_fn: key function that produces a hashable value from right stream
         :rtype: DataSet
         """
         if how == 'left':
@@ -226,8 +427,9 @@ class DataStream(object):
 
     def left_join(self, key, right):
         """ Returns a dataset joined using keys from right dataset only
-        :type right: DataSet
-        :type key: str
+
+        :param DataStream right: :py:class:`DataStream` to be joined with
+        :param str key: attribute name to join on
         :rtype: DataSet
         """
         key_fn = lambda ele: getattr(ele, key)
@@ -235,9 +437,11 @@ class DataStream(object):
 
     def left_join_by(self, left_key_fn, right_key_fn, right):
         """ Returns a dataset joined using key functions to evaluate equality
-        :type left_key_fn: (object) -> object
-        :type right_key_fn: (object) -> object
-        :type right: DataSet
+
+        :param str how: ``left``, ``right``, ``outer``, or ``inner``
+        :param function left_key_fn: key function that produces a hashable value from left stream
+        :param function right_key_fn: key function that produces a hashable value from right stream
+        :param DataStream right: :py:class:`DataStream` to be joined with
         :rtype: DataSet
         """
         joiner = defaultdict(list)
@@ -251,8 +455,9 @@ class DataStream(object):
 
     def right_join(self, key, right):
         """ Returns a dataset joined using keys in right dataset only
-        :type right: DataSet
-        :type key: str
+
+        :param DataStream right: :py:class:`DataStream` to be joined with
+        :param str key: attribute name to join on
         :rtype: DataSet
         """
         key_fn = lambda ele: getattr(ele, key)
@@ -260,9 +465,10 @@ class DataStream(object):
 
     def right_join_by(self, left_key_fn, right_key_fn, right):
         """ Returns a dataset joined using key functions to evaluate equality
-        :type left_key_fn: (object) -> object
-        :type right_key_fn: (object) -> object
-        :type right: DataSet
+
+        :param function left_key_fn: key function that produces a hashable value from left stream
+        :param function right_key_fn: key function that produces a hashable value from right stream
+        :param DataStream right: :py:class:`DataStream` to be joined with
         :rtype: DataSet
         """
         joiner = defaultdict(list)
@@ -276,8 +482,9 @@ class DataStream(object):
 
     def inner_join(self, key, right):
         """ Returns a dataset joined using keys in both dataset only
-        :type right: DataSet
-        :type key: str
+
+        :param DataStream right: :py:class:`DataStream` to be joined with
+        :param str key: attribute name to join on
         :rtype: DataSet
         """
         key_fn = lambda ele: getattr(ele, key)
@@ -285,9 +492,10 @@ class DataStream(object):
 
     def inner_join_by(self, left_key_fn, right_key_fn, right):
         """ Returns a dataset joined using key functions to evaluate equality
-        :type left_key_fn: (object) -> object
-        :type right_key_fn: (object) -> object
-        :type right: DataSet
+
+        :param function left_key_fn: key function that produces a hashable value from left stream
+        :param function right_key_fn: key function that produces a hashable value from right stream
+        :param DataStream right: :py:class:`DataStream` to be joined with
         :rtype: DataSet
         """
         joiner = defaultdict(list)
@@ -301,8 +509,9 @@ class DataStream(object):
 
     def outer_join(self, key, right):
         """ Returns a dataset joined using keys in either datasets
-        :type right: DataSet
-        :type key: str
+
+        :param DataStream right: :py:class:`DataStream` to be joined with
+        :param str key: attribute name to join on
         :rtype: DataSet
         """
         key_fn = lambda ele: getattr(ele, key)
@@ -310,9 +519,10 @@ class DataStream(object):
 
     def outer_join_by(self, left_key_fn, right_key_fn, right):
         """ Returns a dataset joined using key functions to evaluate equality
-        :type left_key_fn: (object) -> object
-        :type right_key_fn: (object) -> object
-        :type right: DataSet
+
+        :param function left_key_fn: key function that produces a hashable value from left stream
+        :param function right_key_fn: key function that produces a hashable value from right stream
+        :param DataStream right: :py:class:`DataStream` to be joined with
         :rtype: DataSet
         """
         left_joiner = defaultdict(list)
@@ -322,7 +532,6 @@ class DataStream(object):
         for ele in right:
             right_joiner[right_key_fn(ele)].append(ele)
         keys = set(left_joiner.keys()).union(set(right_joiner.keys()))
-        # keys = set(left_joiner.keys() + right_joiner.keys())
 
         def iter_join(l, r, join_keys):
             for join_key in join_keys:
@@ -333,11 +542,29 @@ class DataStream(object):
         return self.Set(iter_join(left_joiner, right_joiner, keys))
 
     def pick_attrs(self, attr_names):
+        """ Picks attributes from each row in a stream.  This is helpful for limiting row attrs to only those you want to save in a database, etc.
+
+        >>> Person = namedtuple('Person', ['name', 'year_born'])
+        >>> DataStream([Person('amy', 1987), Person('brad', 1980)]).pick_attrs(['year_born']).to_list()
+        ... [Datum({'year_born': 1987}), Datum({'year_born': 1980})]
+
+        :param list[str] attr_names: list of attribute names to keep
+        :rtype: DataStream
+        """
         def attr_filter(row):
             return Datum({name: getattr(row, name) for name in attr_names})
         return self.map(attr_filter)
 
     def where(self, name):
+        """ Short hand for common filter functions - ``where`` selects an attribute to be filtered on, with a condition like ``gt`` or ``contains`` following it.
+
+        >>> Person = namedtuple('Person', ['name', 'year_born'])
+        >>> DataStream([Person('amy', 1987), Person('brad', 1980)]).where('year_born').gt(1983).to_list()
+        ... [Person(name='amy', year_born=1987)]
+
+        :param str name: attribute name to filter on
+        :rtype: DataStream
+        """
         return FilterRadix(self, name)
 
     @classmethod
@@ -458,6 +685,9 @@ class FilterRadix(object):
 
 
 class DataSet(DataStream):
+    """ Like a :py:class:`DataStream`, but with the source cached as a list.  Able to perform tasks that require the whole source, like sorting and reversing.
+    """
+
     def __init__(self, source):
         super(DataSet, self).__init__(source)
         self._source = list(source)
@@ -468,23 +698,62 @@ class DataSet(DataStream):
     def __getitem__(self, item):
         return self._source[item]
 
+    def __repr__(self):
+        return "{}([{}])".format(self.__class__.__name__, ", ".join(self.map(str)))
+
     def take_now(self, n):
         return self.Set([self._source[i] for i in range(n)])
 
     def apply(self, function):
+        """ Apply a function to the whole dataset
+
+        :param function function: function to be called on the whole dataset
+        :rtype: DataSet
+        """
         return self.Set(function(self))
 
     def call(self, function):
+        """ Call a function with the whole dataset, returning the original
+
+        >>> from pprint import pprint
+        >>> DataSet([1, 2, 3]).apply(pprint)
+        ... DataSet([1, 2, 3])
+        ... DataSet([1, 2, 3])
+
+        :param function function: function to be called on the whole dataset
+        :rtype: DataSet
+        """
         function(self)
         return self
 
     def sort_by(self, key_fn, descending=True):
+        """ Sort the :py:class:`DataSet` using the given key function
+
+        >>> Person = namedtuple('Person', ['name', 'year_born'])
+        >>> DataSet([Person('amy', 1987), Person('brad', 1980)]).sort_by(lambda p: p.year_born)
+        ... DataSet([Datum({'name': 'amy', 'year_born': 1980}), Datum({'name': 'brad', 'year_born': 1987})])
+
+        :param function key_fn: function used select the key used to sort the dataset
+        :param bool descending: sorts descending if ``True``
+        :rtype: DataSet
+        """
         return self.Stream(sorted(self._source, key=key_fn, reverse=descending))
 
     def reverse(self):
+        """ Reverses a :py:class:`DataSet`
+
+        >>> DataSet(range(5)).reverse()
+        ... DataSet([4, 3, 2, 1, 0])
+
+        :rtype: DataSet
+        """
         return self.Stream(element for element in self._source[::-1])
 
     def to_stream(self):
+        """ Streams from this dataset
+
+        :rtype: DataStream
+        """
         return self.Stream(iter(self))
 
     @classmethod

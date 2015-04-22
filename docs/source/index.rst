@@ -8,6 +8,20 @@ datastreams
 
 Efficient, concise stream data processing.
 
+DataStream
+----------
+
+.. py:module:: datastreams
+
+.. autoclass:: DataStream
+    :members:
+
+DataSet
+-------
+
+.. autoclass:: DataSet
+    :members:
+
 
 Contribute
 ----------
@@ -21,3 +35,4 @@ License
 -------
 
 This project is licensed under the MIT license.
+

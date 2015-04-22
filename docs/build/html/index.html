@@ -37,6 +37,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li class="nav-item nav-item-0"><a href="#">datastreams 0.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
@@ -49,6 +52,893 @@
   <div class="section" id="datastreams">
 <h1>datastreams<a class="headerlink" href="#datastreams" title="Permalink to this headline">¶</a></h1>
 <p>Efficient, concise stream data processing.</p>
+<div class="section" id="module-datastreams">
+<span id="datastream"></span><h2>DataStream<a class="headerlink" href="#module-datastreams" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="datastreams.DataStream">
+<em class="property">class </em><code class="descclassname">datastreams.</code><code class="descname">DataStream</code><span class="sig-paren">(</span><em>source</em>, <em>transform=&lt;function &lt;lambda&gt;&gt;</em>, <em>predicate=&lt;function &lt;lambda&gt;&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Foundation for the package - <a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><code class="xref py py-class docutils literal"><span class="pre">DataStream</span></code></a> allows you to chain
+map/filter/reduce/etc style operations together:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">stream</span> <span class="o">=</span> <span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stream</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span><span class="o">*</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>DataStreams are evaluated lazily (using generators), providing memory efficiency and speed.  Using <a class="reference internal" href="#datastreams.DataStream.collect" title="datastreams.DataStream.collect"><code class="xref py py-func docutils literal"><span class="pre">collect()</span></code></a> produces a <a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet"><code class="xref py py-class docutils literal"><span class="pre">DataSet</span></code></a>, which evalutes the whole stream and caches the result.</p>
+<dl class="method">
+<dt id="datastreams.DataStream.batch">
+<code class="descname">batch</code><span class="sig-paren">(</span><em>batch_size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.batch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Batches rows of a stream in a given chunk size</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">]]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; size of each batch</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.chain">
+<code class="descname">chain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.chain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.chain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Chains together iterables, flattening them</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">([</span><span class="s">&#39;this&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">None</span><span class="p">])</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span><span class="o">.</span><span class="n">chain</span><span class="p">()</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="s">&#39;__add__&#39;</span><span class="p">,</span> <span class="s">&#39;__class__&#39;</span><span class="p">,</span> <span class="s">&#39;__contains__&#39;</span><span class="p">,</span> <span class="s">&#39;__delattr__&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.collect">
+<code class="descname">collect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.collect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.collect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collects the stream into a <a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet"><code class="xref py py-class docutils literal"><span class="pre">DataSet</span></code></a></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">*</span> <span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+<span class="gp">... </span><span class="n">DataSet</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.collect_as">
+<code class="descname">collect_as</code><span class="sig-paren">(</span><em>constructor</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.collect_as"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.collect_as" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collects using a constructor</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">collect_as</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+<span class="gp">... </span><span class="n">DataSet</span><span class="p">([</span><span class="s">&#39;0&#39;</span><span class="p">,</span> <span class="s">&#39;1&#39;</span><span class="p">,</span> <span class="s">&#39;2&#39;</span><span class="p">,</span> <span class="s">&#39;3&#39;</span><span class="p">,</span> <span class="s">&#39;4&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>constructor</strong> &#8211; class or constructor function</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.concat">
+<code class="descname">concat</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.concat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.concat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for <a class="reference internal" href="#datastreams.DataStream.chain" title="datastreams.DataStream.chain"><code class="xref py py-func docutils literal"><span class="pre">chain()</span></code></a></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">([</span><span class="s">&#39;this&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">None</span><span class="p">])</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span><span class="o">.</span><span class="n">concat</span><span class="p">()</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="s">&#39;__add__&#39;</span><span class="p">,</span> <span class="s">&#39;__class__&#39;</span><span class="p">,</span> <span class="s">&#39;__contains__&#39;</span><span class="p">,</span> <span class="s">&#39;__delattr__&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.concat_map">
+<code class="descname">concat_map</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.concat_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.concat_map" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#datastreams.DataStream.map" title="datastreams.DataStream.map"><code class="xref py py-func docutils literal"><span class="pre">map()</span></code></a> a function over the stream, then concat it</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">([</span><span class="s">&#39;this&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">None</span><span class="p">])</span><span class="o">.</span><span class="n">concat_map</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="s">&#39;__add__&#39;</span><span class="p">,</span> <span class="s">&#39;__class__&#39;</span><span class="p">,</span> <span class="s">&#39;__contains__&#39;</span><span class="p">,</span> <span class="s">&#39;__delattr__&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>function</strong> (<em>function</em>) &#8211; function to apply</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.count_frequency">
+<code class="descname">count_frequency</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.count_frequency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.count_frequency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Counts frequency of each row in the stream</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">([</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">,</span> <span class="s">&#39;c&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">count_frequency</span><span class="p">()</span>
+<span class="gp">... </span><span class="n">DataSet</span><span class="p">([(</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">[</span><span class="s">&#39;b&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;c&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>attr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the named attribute for each row in the stream</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.drop">
+<code class="descname">drop</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.drop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.drop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drops n rows from the stream</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>n</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of rows to be dropped</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.execute">
+<code class="descname">execute</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates the stream (nothing happens until a stream is evaluted)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.filter">
+<code class="descname">filter</code><span class="sig-paren">(</span><em>filter_fn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filters a stream using the passed in predicate function.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filter_fn</strong> (<em>function</em>) &#8211; only passes values for which filter_fn returns <code class="docutils literal"><span class="pre">True</span></code></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.filter_method">
+<code class="descname">filter_method</code><span class="sig-paren">(</span><em>method</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.filter_method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.filter_method" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filters using a method of the stream row using passed in args/kwargs</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">([</span><span class="s">&#39;hi&#39;</span><span class="p">,</span> <span class="s">&#39;h1&#39;</span><span class="p">,</span> <span class="s">&#39;ho&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">filter_method</span><span class="p">(</span><span class="s">&#39;isalpha&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="s">&#39;hi&#39;</span><span class="p">,</span> <span class="s">&#39;ho&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of method to be called</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.filters">
+<code class="descname">filters</code><span class="sig-paren">(</span><em>filter_fns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.filters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.filters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a list of filter functions</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">filter1</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">6</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">filter2</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span><span class="o">.</span><span class="n">filters</span><span class="p">([</span><span class="n">filter1</span><span class="p">,</span> <span class="n">filter2</span><span class="p">])</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filter_fns</strong> (<em>list[function]</em>) &#8211; list of filter functions</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.for_each">
+<code class="descname">for_each</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.for_each"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.for_each" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls a function for each row in the stream, but passes the row value through</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span><span class="o">.</span><span class="n">for_each</span><span class="p">(</span><span class="n">pprint</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+<span class="gp">... </span><span class="mi">0</span>
+<span class="gp">... </span><span class="mi">1</span>
+<span class="gp">... </span><span class="mi">2</span>
+<span class="gp">... </span><span class="o">&lt;</span><span class="n">datastreams</span><span class="o">.</span><span class="n">DataStream</span> <span class="n">at</span> <span class="mh">0x7f6995ea4790</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>function</strong> (<em>function</em>) &#8211; function to call on each row</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>attr</em>, <em>default=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the named attribute of each row in the stream</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">Person</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Person&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;year_born&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">([</span><span class="n">Person</span><span class="p">(</span><span class="s">&#39;amy&#39;</span><span class="p">,</span> <span class="mi">1987</span><span class="p">),</span> <span class="n">Person</span><span class="p">(</span><span class="s">&#39;brad&#39;</span><span class="p">,</span> <span class="mi">1980</span><span class="p">)])</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;year_born&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="mi">1987</span><span class="p">,</span> <span class="mi">1980</span><span class="p">]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>attr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; attribute name</li>
+<li><strong>default</strong> &#8211; default value to use if attr name not found in row</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.group_by">
+<code class="descname">group_by</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.group_by"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.group_by" title="Permalink to this definition">¶</a></dt>
+<dd><p>Groups a stream by key, returning a <a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet"><code class="xref py py-class docutils literal"><span class="pre">DataSet</span></code></a> of <code class="docutils literal"><span class="pre">(K,</span> <span class="pre">tuple(V))</span></code></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">stream</span> <span class="o">=</span> <span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stream</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="s">&#39;real&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">1</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">2</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; attribute name to group by</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.group_by_fn">
+<code class="descname">group_by_fn</code><span class="sig-paren">(</span><em>key_fn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.group_by_fn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.group_by_fn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Groups a stream by function, returning a <a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet"><code class="xref py py-class docutils literal"><span class="pre">DataSet</span></code></a> of <code class="docutils literal"><span class="pre">(K,</span> <span class="pre">tuple(V))</span></code></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">stream</span> <span class="o">=</span> <span class="n">DataStream</span><span class="p">([</span><span class="s">&#39;hi&#39;</span><span class="p">,</span> <span class="s">&#39;hey&#39;</span><span class="p">,</span> <span class="s">&#39;yo&#39;</span><span class="p">,</span> <span class="s">&#39;sup&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stream</span><span class="o">.</span><span class="n">group_by_fn</span><span class="p">(</span><span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">))</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">{</span><span class="mi">2</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;hi&#39;</span><span class="p">,</span> <span class="s">&#39;yo&#39;</span><span class="p">),</span> <span class="mi">3</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;hey&#39;</span><span class="p">,</span> <span class="s">&#39;sup&#39;</span><span class="p">)}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key_fn</strong> (<em>function</em>) &#8211; key function returning hashable value to group by</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.inner_join">
+<code class="descname">inner_join</code><span class="sig-paren">(</span><em>key</em>, <em>right</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.inner_join"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.inner_join" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dataset joined using keys in both dataset only</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>right</strong> (<a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><em>DataStream</em></a>) &#8211; <a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><code class="xref py py-class docutils literal"><span class="pre">DataStream</span></code></a> to be joined with</li>
+<li><strong>key</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; attribute name to join on</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.inner_join_by">
+<code class="descname">inner_join_by</code><span class="sig-paren">(</span><em>left_key_fn</em>, <em>right_key_fn</em>, <em>right</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.inner_join_by"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.inner_join_by" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dataset joined using key functions to evaluate equality</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>left_key_fn</strong> (<em>function</em>) &#8211; key function that produces a hashable value from left stream</li>
+<li><strong>right_key_fn</strong> (<em>function</em>) &#8211; key function that produces a hashable value from right stream</li>
+<li><strong>right</strong> (<a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><em>DataStream</em></a>) &#8211; <a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><code class="xref py py-class docutils literal"><span class="pre">DataStream</span></code></a> to be joined with</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.join">
+<code class="descname">join</code><span class="sig-paren">(</span><em>how</em>, <em>key</em>, <em>right</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.join"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.join" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dataset joined using keys from right dataset only</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>how</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; <code class="docutils literal"><span class="pre">left</span></code>, <code class="docutils literal"><span class="pre">right</span></code>, <code class="docutils literal"><span class="pre">outer</span></code>, or <code class="docutils literal"><span class="pre">inner</span></code></li>
+<li><strong>right</strong> (<a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><em>DataStream</em></a>) &#8211; <a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><code class="xref py py-class docutils literal"><span class="pre">DataStream</span></code></a> to be joined with</li>
+<li><strong>key</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; attribute name to join on</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.join_by">
+<code class="descname">join_by</code><span class="sig-paren">(</span><em>how</em>, <em>left_key_fn</em>, <em>right_key_fn</em>, <em>right</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.join_by"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.join_by" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses two key functions perform a join.  Key functions should produce
+hashable types to be used to compare/index dicts.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>how</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; <code class="docutils literal"><span class="pre">left</span></code>, <code class="docutils literal"><span class="pre">right</span></code>, <code class="docutils literal"><span class="pre">outer</span></code>, or <code class="docutils literal"><span class="pre">inner</span></code></li>
+<li><strong>right</strong> (<a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><em>DataStream</em></a>) &#8211; <a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><code class="xref py py-class docutils literal"><span class="pre">DataStream</span></code></a> to be joined with</li>
+<li><strong>left_key_fn</strong> (<em>function</em>) &#8211; key function that produces a hashable value from left stream</li>
+<li><strong>right_key_fn</strong> (<em>function</em>) &#8211; key function that produces a hashable value from right stream</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.left_join">
+<code class="descname">left_join</code><span class="sig-paren">(</span><em>key</em>, <em>right</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.left_join"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.left_join" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dataset joined using keys from right dataset only</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>right</strong> (<a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><em>DataStream</em></a>) &#8211; <a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><code class="xref py py-class docutils literal"><span class="pre">DataStream</span></code></a> to be joined with</li>
+<li><strong>key</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; attribute name to join on</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.left_join_by">
+<code class="descname">left_join_by</code><span class="sig-paren">(</span><em>left_key_fn</em>, <em>right_key_fn</em>, <em>right</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.left_join_by"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.left_join_by" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dataset joined using key functions to evaluate equality</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>how</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; <code class="docutils literal"><span class="pre">left</span></code>, <code class="docutils literal"><span class="pre">right</span></code>, <code class="docutils literal"><span class="pre">outer</span></code>, or <code class="docutils literal"><span class="pre">inner</span></code></li>
+<li><strong>left_key_fn</strong> (<em>function</em>) &#8211; key function that produces a hashable value from left stream</li>
+<li><strong>right_key_fn</strong> (<em>function</em>) &#8211; key function that produces a hashable value from right stream</li>
+<li><strong>right</strong> (<a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><em>DataStream</em></a>) &#8211; <a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><code class="xref py py-class docutils literal"><span class="pre">DataStream</span></code></a> to be joined with</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.map">
+<code class="descname">map</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a function to each row in this stream</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">*</span> <span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>function</strong> (<em>function</em>) &#8211; function to apply</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.map_method">
+<code class="descname">map_method</code><span class="sig-paren">(</span><em>method</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.map_method"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.map_method" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call named method of each row using supplied args/kwargs</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">([</span><span class="s">&#39;hi&#39;</span><span class="p">,</span> <span class="s">&#39;hey&#39;</span><span class="p">,</span> <span class="s">&#39;yo&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">map_method</span><span class="p">(</span><span class="s">&#39;upper&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="s">&#39;HI&#39;</span><span class="p">,</span> <span class="s">&#39;HEY&#39;</span><span class="p">,</span> <span class="s">&#39;YO&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>method</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of method to be called</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.outer_join">
+<code class="descname">outer_join</code><span class="sig-paren">(</span><em>key</em>, <em>right</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.outer_join"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.outer_join" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dataset joined using keys in either datasets</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>right</strong> (<a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><em>DataStream</em></a>) &#8211; <a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><code class="xref py py-class docutils literal"><span class="pre">DataStream</span></code></a> to be joined with</li>
+<li><strong>key</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; attribute name to join on</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.outer_join_by">
+<code class="descname">outer_join_by</code><span class="sig-paren">(</span><em>left_key_fn</em>, <em>right_key_fn</em>, <em>right</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.outer_join_by"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.outer_join_by" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dataset joined using key functions to evaluate equality</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>left_key_fn</strong> (<em>function</em>) &#8211; key function that produces a hashable value from left stream</li>
+<li><strong>right_key_fn</strong> (<em>function</em>) &#8211; key function that produces a hashable value from right stream</li>
+<li><strong>right</strong> (<a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><em>DataStream</em></a>) &#8211; <a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><code class="xref py py-class docutils literal"><span class="pre">DataStream</span></code></a> to be joined with</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.pick_attrs">
+<code class="descname">pick_attrs</code><span class="sig-paren">(</span><em>attr_names</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.pick_attrs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.pick_attrs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Picks attributes from each row in a stream.  This is helpful for limiting row attrs to only those you want to save in a database, etc.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">Person</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Person&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;year_born&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">([</span><span class="n">Person</span><span class="p">(</span><span class="s">&#39;amy&#39;</span><span class="p">,</span> <span class="mi">1987</span><span class="p">),</span> <span class="n">Person</span><span class="p">(</span><span class="s">&#39;brad&#39;</span><span class="p">,</span> <span class="mi">1980</span><span class="p">)])</span><span class="o">.</span><span class="n">pick_attrs</span><span class="p">([</span><span class="s">&#39;year_born&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="n">Datum</span><span class="p">({</span><span class="s">&#39;year_born&#39;</span><span class="p">:</span> <span class="mi">1987</span><span class="p">}),</span> <span class="n">Datum</span><span class="p">({</span><span class="s">&#39;year_born&#39;</span><span class="p">:</span> <span class="mi">1980</span><span class="p">})]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>attr_names</strong> (<em>list[str]</em>) &#8211; list of attribute names to keep</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.pipe_to_stdout">
+<code class="descname">pipe_to_stdout</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.pipe_to_stdout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.pipe_to_stdout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pipes stream to stdout using <code class="docutils literal"><span class="pre">sys.stdout.write</span></code></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.right_join">
+<code class="descname">right_join</code><span class="sig-paren">(</span><em>key</em>, <em>right</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.right_join"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.right_join" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dataset joined using keys in right dataset only</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>right</strong> (<a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><em>DataStream</em></a>) &#8211; <a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><code class="xref py py-class docutils literal"><span class="pre">DataStream</span></code></a> to be joined with</li>
+<li><strong>key</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; attribute name to join on</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.right_join_by">
+<code class="descname">right_join_by</code><span class="sig-paren">(</span><em>left_key_fn</em>, <em>right_key_fn</em>, <em>right</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.right_join_by"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.right_join_by" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dataset joined using key functions to evaluate equality</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>left_key_fn</strong> (<em>function</em>) &#8211; key function that produces a hashable value from left stream</li>
+<li><strong>right_key_fn</strong> (<em>function</em>) &#8211; key function that produces a hashable value from right stream</li>
+<li><strong>right</strong> (<a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><em>DataStream</em></a>) &#8211; <a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><code class="xref py py-class docutils literal"><span class="pre">DataStream</span></code></a> to be joined with</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.set">
+<code class="descname">set</code><span class="sig-paren">(</span><em>attr</em>, <em>transfer_func</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the named attribute of each row in the stream using the supplied function</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>attr</strong> &#8211; attribute name</li>
+<li><strong>transfer_func</strong> &#8211; function that takes the row and returns the value to be stored at the named attribute</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.take">
+<code class="descname">take</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.take"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.take" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes n rows from the stream</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">100000</span><span class="p">))</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>n</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of rows to be taken</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.take_now">
+<code class="descname">take_now</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.take_now"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.take_now" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like take, but evaluates immediately and returns a <a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet"><code class="xref py py-class docutils literal"><span class="pre">DataSet</span></code></a></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">100000</span><span class="p">))</span><span class="o">.</span><span class="n">take_now</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">... </span><span class="n">DataSet</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>n</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of rows to be taken</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.to_dict">
+<code class="descname">to_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.to_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.to_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a stream to a <a class="reference external" href="https://docs.python.org/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">dict</span></code></a></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">stream</span> <span class="o">=</span> <span class="n">DataStream</span><span class="p">([</span><span class="s">&#39;hi&#39;</span><span class="p">,</span> <span class="s">&#39;hey&#39;</span><span class="p">,</span> <span class="s">&#39;yo&#39;</span><span class="p">,</span> <span class="s">&#39;sup&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">stream</span><span class="o">.</span><span class="n">group_by_fn</span><span class="p">(</span><span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">))</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">{</span><span class="mi">2</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;hi&#39;</span><span class="p">,</span> <span class="s">&#39;yo&#39;</span><span class="p">),</span> <span class="mi">3</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;hey&#39;</span><span class="p">,</span> <span class="s">&#39;sup&#39;</span><span class="p">)}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/stdtypes.html#dict" title="(in Python v2.7)">dict</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.to_list">
+<code class="descname">to_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.to_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.to_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a stream to a <a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">list</span></code></a></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">*</span> <span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)">list</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.to_set">
+<code class="descname">to_set</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.to_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.to_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a stream to a <a class="reference internal" href="#datastreams.DataStream.set" title="datastreams.DataStream.set"><code class="xref py py-class docutils literal"><span class="pre">set</span></code></a></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">to_set</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream.set" title="datastreams.DataStream.set">set</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.where">
+<code class="descname">where</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.where"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.where" title="Permalink to this definition">¶</a></dt>
+<dd><p>Short hand for common filter functions - <code class="docutils literal"><span class="pre">where</span></code> selects an attribute to be filtered on, with a condition like <code class="docutils literal"><span class="pre">gt</span></code> or <code class="docutils literal"><span class="pre">contains</span></code> following it.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">Person</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Person&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;year_born&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">([</span><span class="n">Person</span><span class="p">(</span><span class="s">&#39;amy&#39;</span><span class="p">,</span> <span class="mi">1987</span><span class="p">),</span> <span class="n">Person</span><span class="p">(</span><span class="s">&#39;brad&#39;</span><span class="p">,</span> <span class="mi">1980</span><span class="p">)])</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="s">&#39;year_born&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">gt</span><span class="p">(</span><span class="mi">1983</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="n">Person</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;amy&#39;</span><span class="p">,</span> <span class="n">year_born</span><span class="o">=</span><span class="mi">1987</span><span class="p">)]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; attribute name to filter on</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataStream.window">
+<code class="descname">window</code><span class="sig-paren">(</span><em>length</em>, <em>interval</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataStream.window"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataStream.window" title="Permalink to this definition">¶</a></dt>
+<dd><p>Windows the rows of a stream in a given length and interval</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataStream</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">window</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+<span class="gp">... </span><span class="p">[</span><span class="n">DataSet</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="n">DataSet</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])]</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>length</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; length of window</li>
+<li><strong>interval</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; distance between windows</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="dataset">
+<h2>DataSet<a class="headerlink" href="#dataset" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="datastreams.DataSet">
+<em class="property">class </em><code class="descclassname">datastreams.</code><code class="descname">DataSet</code><span class="sig-paren">(</span><em>source</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like a <a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream"><code class="xref py py-class docutils literal"><span class="pre">DataStream</span></code></a>, but with the source cached as a list.  Able to perform tasks that require the whole source, like sorting and reversing.</p>
+<dl class="method">
+<dt id="datastreams.DataSet.apply">
+<code class="descname">apply</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataSet.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataSet.apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a function to the whole dataset</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>function</strong> (<em>function</em>) &#8211; function to be called on the whole dataset</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataSet.call">
+<code class="descname">call</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataSet.call"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataSet.call" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call a function with the whole dataset, returning the original</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">DataSet</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pprint</span><span class="p">)</span>
+<span class="gp">... </span><span class="n">DataSet</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+<span class="gp">... </span><span class="n">DataSet</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>function</strong> (<em>function</em>) &#8211; function to be called on the whole dataset</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataSet.reverse">
+<code class="descname">reverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataSet.reverse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataSet.reverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reverses a <a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet"><code class="xref py py-class docutils literal"><span class="pre">DataSet</span></code></a></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">DataSet</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+<span class="gp">... </span><span class="n">DataSet</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataSet.sort_by">
+<code class="descname">sort_by</code><span class="sig-paren">(</span><em>key_fn</em>, <em>descending=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataSet.sort_by"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataSet.sort_by" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort the <a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet"><code class="xref py py-class docutils literal"><span class="pre">DataSet</span></code></a> using the given key function</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">Person</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Person&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;year_born&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">DataSet</span><span class="p">([</span><span class="n">Person</span><span class="p">(</span><span class="s">&#39;amy&#39;</span><span class="p">,</span> <span class="mi">1987</span><span class="p">),</span> <span class="n">Person</span><span class="p">(</span><span class="s">&#39;brad&#39;</span><span class="p">,</span> <span class="mi">1980</span><span class="p">)])</span><span class="o">.</span><span class="n">sort_by</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">year_born</span><span class="p">)</span>
+<span class="gp">... </span><span class="n">DataSet</span><span class="p">([</span><span class="n">Datum</span><span class="p">({</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;amy&#39;</span><span class="p">,</span> <span class="s">&#39;year_born&#39;</span><span class="p">:</span> <span class="mi">1980</span><span class="p">}),</span> <span class="n">Datum</span><span class="p">({</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;brad&#39;</span><span class="p">,</span> <span class="s">&#39;year_born&#39;</span><span class="p">:</span> <span class="mi">1987</span><span class="p">})])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>key_fn</strong> (<em>function</em>) &#8211; function used select the key used to sort the dataset</li>
+<li><strong>descending</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; sorts descending if <code class="docutils literal"><span class="pre">True</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#datastreams.DataSet" title="datastreams.DataSet">DataSet</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="datastreams.DataSet.to_stream">
+<code class="descname">to_stream</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datastreams/datastreams.html#DataSet.to_stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datastreams.DataSet.to_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Streams from this dataset</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#datastreams.DataStream" title="datastreams.DataStream">DataStream</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 <div class="section" id="contribute">
 <h2>Contribute<a class="headerlink" href="#contribute" title="Permalink to this headline">¶</a></h2>
 <p>Check it out on <a class="reference external" href="https://github.com/StuartAxelOwen/datastreams!">github</a>!</p>
@@ -68,6 +958,8 @@
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">datastreams</a><ul>
+<li><a class="reference internal" href="#module-datastreams">DataStream</a></li>
+<li><a class="reference internal" href="#dataset">DataSet</a></li>
 <li><a class="reference internal" href="#contribute">Contribute</a></li>
 <li><a class="reference internal" href="#license">License</a></li>
 </ul>
