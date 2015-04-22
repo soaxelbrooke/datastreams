@@ -76,7 +76,7 @@ You can join :py:class:`DataStream` - even streams of objects!
 ``where`` Clause
 ----------------
 
-Chained `filter`s are a bit tiresome. `where` lets you perform simple filtering using more accessible language:
+Chained ``filter`` s are a bit tiresome. ``where`` lets you perform simple filtering using more accessible language:
 
 .. code-block:: python
 
@@ -96,7 +96,7 @@ Instead of:
         .filter(lambda user: user.segment in target_segments)\
         .for_each(do_something)
 
-I bet you got tired just _reading_ that many lambdas!
+I bet you got tired just *reading* that many lambdas!
 
 DataStream
 ----------
