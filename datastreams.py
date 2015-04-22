@@ -1,19 +1,25 @@
 from itertools import islice, chain
-from object_join import JoinedObject
 import csv
 from copy import copy
-from collections import defaultdict, deque, Counter
+from collections import defaultdict, deque, Counter, namedtuple
 import sys
+try:
+    reduce
+except:
+    from functools import reduce
 
 
 class Datum(object):
     def __init__(self, attributes):
         if isinstance(attributes, dict):
-            for name, value in attributes.iteritems():
+            for name, value in attributes.items():
                 setattr(self, name, value)
         else:
             for name, value in attributes:
                 setattr(self, name, value)
+
+    def __repr__(self):
+        return str(self.__dict__)
 
 
 class DataStream(object):
@@ -40,11 +46,14 @@ class DataStream(object):
                 for row in self._source
                 if self._predicate(row))
 
-    def next(self):
+    def __next__(self):
         while True:
             src_next = next(self._source)
             if self._predicate(src_next):
                 return self._transform(src_next)
+
+    def next(self):
+        return self.__next__()
 
     def reduce(self, function, initial):
         return self.Set(reduce(function, self, initial))
@@ -124,11 +133,17 @@ class DataStream(object):
         queue = deque(maxlen=length)
 
         def window_iter():
+            queue.extend(self.take_now(length))
+            yield self.Set(queue)
             while True:
+                for _ in range(interval):
+                    queue.popleft()
                 try:
-                    queue.extend(self.take_now(interval))
+                    for _ in range(interval):
+                        queue.append(next(self))
                     yield self.Set(queue)
                 except StopIteration:
+                    yield self.Set(queue)
                     break
         return self.Stream(window_iter())
 
@@ -150,7 +165,7 @@ class DataStream(object):
         grouper = defaultdict(list)
         for ele in self:
             grouper[key_fn(ele)].append(ele)
-        return self.Set(grouper.viewitems())
+        return self.Set(grouper.items())
 
     def to_dict(self):
         return dict(self.collect())
@@ -167,7 +182,7 @@ class DataStream(object):
     def count_frequency(self):
         def count_reducer(count, row):
             return count + Counter(row)
-        return self.Set(reduce(count_reducer, self, Counter()).iteritems())
+        return self.Set(reduce(count_reducer, self, Counter()).items())
 
     def join(self, how, key, right):
         """ Returns a dataset joined using keys from right dataset only
@@ -306,7 +321,8 @@ class DataStream(object):
         right_joiner = defaultdict(list)
         for ele in right:
             right_joiner[right_key_fn(ele)].append(ele)
-        keys = set(left_joiner.keys() + right_joiner.keys())
+        keys = set(left_joiner.keys()).union(set(right_joiner.keys()))
+        # keys = set(left_joiner.keys() + right_joiner.keys())
 
         def iter_join(l, r, join_keys):
             for join_key in join_keys:
@@ -474,3 +490,19 @@ class DataSet(DataStream):
     @classmethod
     def from_csv(cls, path, headers=None, constructor=Datum):
         return cls.Set(DataStream.from_csv(path, headers, constructor))
+
+
+def JoinedObject(left, right):
+    ldict = left.__dict__ if hasattr(left, '__dict__') else {}
+    rdict = right.__dict__ if hasattr(right, '__dict__') else {}
+    names = filter(lambda name: not name.startswith('_'),
+                   set(['left', 'right'] + list(ldict.keys()) + list(rdict.keys())))
+    joined_class = namedtuple(left.__class__.__name__ + right.__class__.__name__, names)
+    attrs = {}
+    attrs.update(rdict)
+    attrs.update(ldict)
+    if 'left' in attrs:
+        del attrs['left']
+    if 'right' in attrs:
+        del attrs['right']
+    return joined_class(left=left, right=right, **attrs)

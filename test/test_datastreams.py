@@ -8,6 +8,10 @@ sys.path.insert(0,parentdir)
 from datastreams import DataSet, DataStream, Datum
 from dictstreams import DictSet, DictStream
 import unittest
+try:
+    reduce
+except:
+    from functools import reduce
 
 
 class JoinTests(unittest.TestCase):
@@ -65,7 +69,7 @@ class JoinTests(unittest.TestCase):
 class StreamTests(unittest.TestCase):
 
     def test_map(self):
-        stream = DataStream(xrange(10))
+        stream = DataStream(range(10))
         inced = stream.map(lambda num: num + 1)
         self.assertEqual(1, next(inced))
         self.assertEqual(2, next(inced))
@@ -74,48 +78,48 @@ class StreamTests(unittest.TestCase):
         self.assertEqual(5, next(inced))
 
     def test_map_builtin(self):
-        stream = DataStream(xrange(10))
-        updated = map(lambda num: num + 1, stream)
+        stream = DataStream(range(10))
+        updated = list(map(lambda num: num + 1, stream))
         self.assertEqual(len(updated), 10)
         self.assertEqual(updated[0], 1)
         self.assertEqual(updated[1], 2)
         self.assertEqual(updated[2], 3)
 
     def test_filter(self):
-        stream = DataStream(xrange(14))
+        stream = DataStream(range(14))
         odds = stream.filter(lambda num: num % 2)
         self.assertEqual(next(odds), 1)
         self.assertEqual(next(odds), 3)
         self.assertEqual(next(odds), 5)
 
-        posset = DataStream(xrange(10)).collect()
+        posset = DataStream(range(10)).collect()
         negs = set(posset.filter(lambda num: num < 0))
         self.assertEqual(len(negs), 0)
         doubled = list(posset.map(lambda num: num * 2))
         self.assertEqual(len(doubled), len(posset))
 
     def test_filters(self):
-        stream = DataStream(xrange(14))
+        stream = DataStream(range(14))
         odd_filter = lambda num: num % 2 != 0
         gt5filter = lambda num: num > 5
         filtered = list(stream.filters([odd_filter, gt5filter]))
         self.assertListEqual(filtered, [7, 9, 11, 13])
 
     def test_filter_builtin(self):
-        stream = DataStream(xrange(14))
-        odds = filter(lambda num: num % 2, stream)
+        stream = DataStream(range(14))
+        odds = list(filter(lambda num: num % 2, stream))
         self.assertEqual(odds[0], 1)
         self.assertEqual(odds[1], 3)
         self.assertEqual(odds[2], 5)
 
     def test_reduce(self):
-        stream = DataStream(xrange(5))
+        stream = DataStream(range(5))
         factorials = stream.map(lambda num: num + 1)\
             .reduce(lambda facts, num: facts + [num * facts[-1]], [1])[-1]
         self.assertEqual(factorials, 5*4*3*2*1)
 
     def test_reduce_builtin(self):
-        stream = DataStream(xrange(5))
+        stream = DataStream(range(5))
         summed = reduce(lambda a, b: a + b, stream, 0)
         self.assertEqual(summed, sum(range(5)))
 
@@ -136,20 +140,21 @@ class StreamTests(unittest.TestCase):
         self.assertEqual('john', next(stream).name)
 
     def test_batch(self):
-        stream = DataStream.from_csv("test_set_1.csv")
-        batched = stream.batch(2).collect()
-        self.assertEqual(len(batched), 2)
-        for batch in batched:
-            self.assertEqual(len(batch), 2)
+        batched = DataStream(range(9)).batch(2)
+        self.assertSequenceEqual(next(batched), [0, 1])
+        self.assertSequenceEqual(next(batched), [2, 3])
+        self.assertSequenceEqual(next(batched), [4, 5])
+        self.assertSequenceEqual(next(batched), [6, 7])
+        self.assertSequenceEqual(next(batched), [8])
 
     def test_window(self):
         stream = DataStream(range(10))
         windowed = stream.window(3, 2)
-        self.assertLessEqual(next(windowed), [0, 1, 2])
-        self.assertLessEqual(next(windowed), [2, 3, 4])
-        self.assertLessEqual(next(windowed), [4, 5, 6])
-        self.assertLessEqual(next(windowed), [6, 7, 8])
-        self.assertLessEqual(next(windowed), [8, 9, 10])
+        self.assertSequenceEqual(next(windowed).to_list(), [0, 1, 2])
+        self.assertSequenceEqual(next(windowed).to_list(), [2, 3, 4])
+        self.assertSequenceEqual(next(windowed).to_list(), [4, 5, 6])
+        self.assertSequenceEqual(next(windowed).to_list(), [6, 7, 8])
+        self.assertSequenceEqual(next(windowed).to_list(), [8, 9])
 
     def test_concat(self):
         stream = DataStream([[], [1], [2, 3]])
@@ -159,28 +164,28 @@ class StreamTests(unittest.TestCase):
         self.assertEqual(next(flattened), 3)
 
     def test_concat_map(self):
-        stream = DataStream(xrange(20))
+        stream = DataStream(range(20))
         batched = stream.batch(4)
         concat_mapped = batched.concat_map(
             lambda nums: map(lambda num: num + 1, nums))
         result = list(concat_mapped)
-        self.assertListEqual(result, map(lambda num: num + 1, range(20)))
+        self.assertSequenceEqual(result, list(map(lambda num: num + 1, range(20))))
 
     def test_for_each(self):
-        stream = DataStream(xrange(20))
+        stream = DataStream(range(20))
         not_changed = stream.for_each(lambda num: num + 1)
         self.assertEqual(next(not_changed), 0)
         self.assertEqual(next(not_changed), 1)
         self.assertEqual(next(not_changed), 2)
 
     def test_take_now(self):
-        stream = DataStream(xrange(13))
+        stream = DataStream(range(13))
         not_iter = stream.take_now(5)
         self.assertEqual(len(not_iter), 5)
         self.assertEqual(not_iter[0], 0)
 
     def test_drop_take(self):
-        stream = DataStream(xrange(10))
+        stream = DataStream(range(10))
         second_half = stream.drop(5).take(5)
         self.assertEqual(next(second_half), 5)
         self.assertEqual(next(second_half), 6)
@@ -204,7 +209,7 @@ class StreamTests(unittest.TestCase):
     def test_to_list(self):
         stream = DataStream(range(20))
         streamlist = stream.to_list()
-        self.assertLessEqual(streamlist, range(20))
+        self.assertListEqual(streamlist, list(range(20)))
 
     def test_to_set(self):
         stream = DataStream(range(19))
@@ -218,7 +223,7 @@ class StreamTests(unittest.TestCase):
             .map(lambda num: abs(num - 9)) \
             .dedupe()
         self.assertEqual(len(dataset), 10)
-        self.assertLessEqual(list(dataset), range(10))
+        self.assertSequenceEqual(list(dataset), range(10))
 
     def test_set(self):
         class Brad(object):
@@ -276,7 +281,7 @@ class StreamTests(unittest.TestCase):
             _test_execute_count += 1
 
         self.assertEqual(_test_execute_count, 0)
-        DataStream(xrange(20))\
+        DataStream(range(20))\
             .for_each(inc_execute_count)\
             .execute()
         self.assertEqual(_test_execute_count, 20)
