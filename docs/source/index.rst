@@ -18,6 +18,8 @@ Efficient, concise stream data processing.
     ...     .count_frequency().to_list()
     [('e', 2), ('g', 2), ('h', 1), ('l', 2), ('o', 3), ('s', 1), ('r', 1), ('u', 1)]
 
+Overview
+========
 
 Pipelining
 ----------
@@ -84,7 +86,7 @@ Chained ``filter`` s are a bit tiresome. ``where`` lets you perform simple filte
         .where('age').gteq(18)\
         .where('age').lt(35)\
         .where('segment').is_in(target_segments)\
-        .for_each(do_something)
+        .for_each(do_something).execute()
 
 Instead of:
 
@@ -94,35 +96,45 @@ Instead of:
         .filter(lambda user: user.age >= 18)\
         .filter(lambda user: user.age < 35)\
         .filter(lambda user: user.segment in target_segments)\
-        .for_each(do_something)
+        .for_each(do_something).execute()
 
 I bet you got tired just *reading* that many lambdas!
 
-DataStream
-----------
+Apache Spark Integration
+------------------------
+
+Integrating with Apache Spark is easy - just use ``RddStream`` instead of ``DataStream`` or ``DataSet``, and pass it an RDD.  The rest of the API is the same!
+
+.. code-block:: python
+
+    RddStream(myrdd)\
+        .where('age').gteq(18)\
+        .where('age').lt(35)\
+        .where('segment').is_in(target_segments)\
+        .for_each(do_something).execute()
+
+DataStream API
+==============
 
 .. py:module:: datastreams
 
 .. autoclass:: DataStream
     :members:
 
-DataSet
--------
+DataSet API
+===========
 
 .. autoclass:: DataSet
     :members:
 
 
-Contribute
-----------
+Etc
+===
 
 Check it out on github_!
 
+This project is licensed under the MIT license.
 
 .. _github: https://github.com/StuartAxelOwen/datastreams!
 
-License
--------
-
-This project is licensed under the MIT license.
 
