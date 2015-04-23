@@ -37,10 +37,12 @@ class DataStream(object):
     def Stream(iterable,
                transform=lambda row: row,
                predicate=lambda row: True):
+        # TODO document why for this!
         return DataStream(iterable, transform=transform, predicate=predicate)
 
     @staticmethod
     def Set(iterable):
+        # TODO document why for this!
         return DataSet(iterable)
 
     def __init__(self, source,
@@ -470,7 +472,7 @@ class DataStream(object):
         joined = []
         for ele in self:
             for other in joiner.get(left_key_fn(ele), [None]):
-                joined.append(JoinedObject(ele, other))
+                joined.append(join_objects(ele, other))
         return self.Set(joined)
 
     def right_join(self, key, right):
@@ -497,7 +499,7 @@ class DataStream(object):
         joined = []
         for ele in right:
             for other in joiner.get(right_key_fn(ele), [None]):
-                joined.append(JoinedObject(ele, other))
+                joined.append(join_objects(ele, other))
         return self.Set(joined)
 
     def inner_join(self, key, right):
@@ -524,7 +526,7 @@ class DataStream(object):
         joined = []
         for ele in self:
             for other in joiner[left_key_fn(ele)]:
-                joined.append(JoinedObject(ele, other))
+                joined.append(join_objects(ele, other))
         return self.Set(joined)
 
     def outer_join(self, key, right):
@@ -557,7 +559,7 @@ class DataStream(object):
             for join_key in join_keys:
                 for ele in l.get(join_key, [None]):
                     for other in r.get(join_key, [None]):
-                        yield JoinedObject(ele, other)
+                        yield join_objects(ele, other)
 
         return self.Set(iter_join(left_joiner, right_joiner, keys))
 
@@ -803,9 +805,14 @@ class DataSet(DataStream):
         return cls.Set(DataStream.from_csv(path, headers, constructor))
 
 
-def JoinedObject(left, right):
-    ldict = left.__dict__ if hasattr(left, '__dict__') else {}
-    rdict = right.__dict__ if hasattr(right, '__dict__') else {}
+def get_slots_attrs(obj):
+    return {key: getattr(obj, key) for key in obj.__slots__} \
+        if hasattr(obj, '__slots__') else {}
+
+
+def join_objects(left, right):
+    ldict = left.__dict__ if hasattr(left, '__dict__') else get_slots_attrs(left)
+    rdict = right.__dict__ if hasattr(right, '__dict__') else get_slots_attrs(right)
     names = filter(lambda name: not name.startswith('_'),
                    set(['left', 'right'] + list(ldict.keys()) + list(rdict.keys())))
     joined_class = namedtuple(left.__class__.__name__ + right.__class__.__name__, names)
