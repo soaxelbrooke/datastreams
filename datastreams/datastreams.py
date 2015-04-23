@@ -164,20 +164,27 @@ class DataStream(object):
         """
         return self.filter(lambda row: getattr(row, method)(*args, **kwargs))
 
-    def set(self, attr, transfer_func):
+    def set(self, name, transfer_func=None, value=None):
         """ Sets the named attribute of each row in the stream using the supplied function
 
-        :param  attr: attribute name
+        :param  name: attribute name
         :param transfer_func: function that takes the row and returns the value to be stored at the named attribute
         :rtype: DataStream
         """
-        def row_setattr(row):
-            new_row = copy(row)
-            setattr(new_row, attr, transfer_func(row))
-            return new_row
+        if transfer_func is not None:
+            def row_setattr(row):
+                new_row = copy(row)
+                setattr(new_row, name, transfer_func(row))
+                return new_row
+        else:
+            def row_setattr(row):
+                new_row = copy(row)
+                setattr(new_row, name, value)
+                return new_row
+
         return self.map(row_setattr)
 
-    def get(self, attr, default=None):
+    def get(self, name, default=None):
         """ Gets the named attribute of each row in the stream
 
         >>> Person = namedtuple('Person', ['name', 'year_born'])
@@ -189,7 +196,7 @@ class DataStream(object):
         :rtype: DataStream
         """
         def row_getattr(row):
-            return getattr(row, attr) if hasattr(row, attr) else default
+            return getattr(row, name) if hasattr(row, name) else default
         return self.map(row_getattr)
 
     def delete(self, attr):
