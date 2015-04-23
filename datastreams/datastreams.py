@@ -805,14 +805,18 @@ class DataSet(DataStream):
         return cls.Set(DataStream.from_csv(path, headers, constructor))
 
 
-def get_slots_attrs(obj):
-    return {key: getattr(obj, key) for key in obj.__slots__} \
-        if hasattr(obj, '__slots__') else {}
+def get_object_attrs(obj):
+    if hasattr(obj, '__dict__'):
+        return obj.__dict__
+    elif hasattr(obj, '__slots__'):
+        return {key: getattr(obj, key) for key in obj.__slots__}
+    else:
+        return {}
 
 
 def join_objects(left, right):
-    ldict = left.__dict__ if hasattr(left, '__dict__') else get_slots_attrs(left)
-    rdict = right.__dict__ if hasattr(right, '__dict__') else get_slots_attrs(right)
+    ldict = get_object_attrs(left)
+    rdict = get_object_attrs(right)
     names = filter(lambda name: not name.startswith('_'),
                    set(['left', 'right'] + list(ldict.keys()) + list(rdict.keys())))
     joined_class = namedtuple(left.__class__.__name__ + right.__class__.__name__, names)
