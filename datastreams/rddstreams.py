@@ -1,7 +1,7 @@
 __author__ = 'stuart'
 
 from datastreams import DataStream
-from datastreams import JoinedObject
+from datastreams import join_objects
 from itertools import product
 
 
@@ -27,10 +27,10 @@ class RddStream(DataStream):
         return self.Stream(self._source.filter(filter_fn))
 
     def collect(self):
-        return self._source.collect()
+        return self.Stream(self.rdd(self._source.collect()))
 
     def take(self, n):
-        return self.Stream(self._source.take(n))
+        return self.Stream(self.rdd(self._source.take(n)))
 
     def take_now(self, n):
         return self.take(n)
@@ -42,20 +42,20 @@ class RddStream(DataStream):
         self.collect()
 
     def batch(self, batch_size):
-        raise NotImplementedError("Spark does not implement batching, try using"
-                                  " the probably non existent"
-                                  " StreamingRddStream!")
+        raise NotImplementedError("Spark does not implement batching, try using "
+                                  "the probably non existent "
+                                  "StreamingRddStream!")
 
     def window(self, length, interval):
         raise NotImplementedError("Spark does not implement windowing, try "
-                                  "using the probably non existent"
-                                  " StreamingRddStream!")
+                                  "using the probably non existent "
+                                  "StreamingRddStream!")
 
     def group_by_fn(self, key_fn):
         return self.Stream(self._source.groupBy(key_fn))
 
     def count_frequency(self):
-        return self.Stream(self._source.countByValue())
+        return self.Stream(self.rdd(self._source.countByValue().items()))
 
     def apply(self, function):
         return self.Stream(function(self))
@@ -64,14 +64,13 @@ class RddStream(DataStream):
         function(self)
 
     def sort_by(self, key_fn, descending=True):
-        return self.Stream(self._source.sortByKey(
-            ascending=not descending, keyfunc=key_fn))
+        return self.Stream(self._source.sortBy(ascending=not descending, keyfunc=key_fn))
 
     def dedupe(self):
         return self.Stream(self._source.distinct())
 
     def reverse(self):
-        return self.Stream(self._source.takeOrdered(len(self), key=lambda x: -x))
+        return self.Stream(self.rdd(self._source.takeOrdered(len(self), key=lambda x: -x)))
 
     @staticmethod
     def combine_joined(joined):
@@ -83,7 +82,7 @@ class RddStream(DataStream):
         return joined \
             .map(lambda kvpair: kvpair[1]) \
             .flatMap(product_pairs) \
-            .map(lambda pair: JoinedObject(pair[0], pair[1]))
+            .map(lambda pair: join_objects(pair[0], pair[1]))
 
     def left_join_by(self, left_key_fn, right_key_fn, right):
         right_grouped = right._source.groupBy(right_key_fn)
@@ -105,3 +104,15 @@ class RddStream(DataStream):
 
     def outer_join_by(self, left_key_fn, right_key_fn, right):
         raise NotImplementedError
+
+    def to_list(self):
+        return self._source.collect()
+
+    def to_set(self):
+        return set(self.to_list())
+
+    def to_dict(self):
+        return dict(self.to_list())
+
+    def rdd(self, iterable):
+        return self._source.context.parallelize(iterable)
