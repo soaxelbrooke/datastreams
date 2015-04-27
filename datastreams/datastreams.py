@@ -142,9 +142,8 @@ class DataStream(object):
     def filters(self, filter_fns):
         """ Apply a list of filter functions
 
-        >>> filter1 = lambda n: n < 6
-        >>> filter2 = lambda n: n % 2 == 0
-        >>> DataStream(range(10)).filters([filter1, filter2]).to_list()
+        >>> evens_less_than_six = [lambda n: n < 6, lambda n: n % 2 == 0]
+        >>> DataStream(range(10)).filters(evens_less_than_six).to_list()
         ... [0, 2, 4]
 
         :param list[function] filter_fns: list of filter functions
@@ -325,7 +324,8 @@ class DataStream(object):
                         queue.append(next(self))
                     yield self.Set(queue)
                 except StopIteration:
-                    yield self.Set(queue)
+                    if len(queue) != 0:
+                        yield self.Set(queue)
                     break
         return self.Stream(window_iter())
 

@@ -146,6 +146,9 @@ class StreamTests(unittest.TestCase):
         self.assertSequenceEqual(next(batched), [6, 7])
         self.assertSequenceEqual(next(batched), [8])
 
+        batched = DataStream(range(4)).batch(2).to_list()
+        self.assertEqual(len(batched), 2)
+
     def test_window(self):
         stream = DataStream(range(10))
         windowed = stream.window(3, 2)
