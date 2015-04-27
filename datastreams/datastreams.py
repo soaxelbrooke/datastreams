@@ -57,6 +57,12 @@ class DataStream(object):
                 for row in self._source
                 if self._predicate(row))
 
+    def __repr__(self):
+        return "{}({})".format(self.__class__.__name__, str(self._source))
+
+    def __str__(self):
+        return self.__str__()
+
     def __next__(self):
         while True:
             src_next = next(self._source)
@@ -750,7 +756,11 @@ class DataSet(DataStream):
         return self._source[item]
 
     def __repr__(self):
-        return "{}([{}])".format(self.__class__.__name__, ", ".join(self.map(str)))
+        head, tail = ', '.join(map(str, self[:5])), ', '.join(map(str, self[-5:]))
+        return "{}([{}, ... {}])".format(self.__class__.__name__, head, tail)
+
+    def __str__(self):
+        return self.__repr__()
 
     def take_now(self, n):
         return self.Set([self._source[i] for i in range(n)])
