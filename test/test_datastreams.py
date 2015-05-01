@@ -295,7 +295,27 @@ class StreamTests(unittest.TestCase):
     def test_dedupe(self):
         stream = DataStream([[0, 1], [0, 2], [1, 1]])
         deduped = stream.dedupe(lambda row: row[0])
-        self.assertSequenceEqual([[0, 1], [1, 1]], deduped)
+        self.assertSequenceEqual([[0, 1], [1, 1]], deduped.to_list())
+
+    def test_slots_set(self):
+        class Thing(object):
+            __slots__ = ['name', 'age']
+
+            def __init__(self, name, age):
+                self.name = name
+                self.age = age
+
+        class Other(object):
+            __slots__ = ['name', 'weight']
+
+            def __init__(self, name, weight):
+                self.name = name
+                self.weight = weight
+
+        things = DataStream([Thing('brad', 24), Thing('alice', 54)])
+        others = DataStream([Other('brad', 170), Other('angela', 115)])
+        other_things = things.join('inner', 'name', others).set('age', value=20)
+        self.assertEqual(next(other_things).age, 20)
 
 
 class DataSetTests(unittest.TestCase):

@@ -335,14 +335,23 @@ class DataStream(object):
                     break
         return self.Stream(window_iter())
 
-    def dedupe(self, key_fn):
-        seen = set([])
-        out = []
-        for row in self:
-            if key_fn(row) not in seen:
-                seen.add(key_fn(row))
-                out.append(row)
-        return self.Set(out)
+    def dedupe(self, key_fn=lambda a: a):
+        """ Removes duplicates from a stream, returning only unique values.
+
+        >>> DataStream('aaaabcccddd').dedupe().to_list()
+        ... ['a', 'b', 'c', 'd']
+
+        :param function key_fn: function returning a hashable value used to determine uniqueness
+        :return: DataStream
+        """
+        seen = set()
+
+        def unique():
+            for row in self:
+                if key_fn(row) not in seen:
+                    seen.add(key_fn(row))
+                    yield row
+        return self.Stream(unique())
 
     def group_by(self, key):
         """ Groups a stream by key, returning a :py:class:`DataSet` of ``(K, tuple(V))``
@@ -832,16 +841,10 @@ def get_object_attrs(obj):
 
 
 def join_objects(left, right):
-    ldict = get_object_attrs(left)
-    rdict = get_object_attrs(right)
-    names = filter(lambda name: not name.startswith('_'),
-                   set(['left', 'right'] + list(ldict.keys()) + list(rdict.keys())))
-    joined_class = namedtuple(left.__class__.__name__ + right.__class__.__name__, names)
+    joined_class = type(left.__class__.__name__ + right.__class__.__name__, (Datum,), {})
     attrs = {}
-    attrs.update(rdict)
-    attrs.update(ldict)
-    if 'left' in attrs:
-        del attrs['left']
-    if 'right' in attrs:
-        del attrs['right']
-    return joined_class(left=left, right=right, **attrs)
+    attrs.update(get_object_attrs(right))
+    attrs.update(get_object_attrs(left))
+    attrs['left'] = left
+    attrs['right'] = right
+    return joined_class(attrs)
