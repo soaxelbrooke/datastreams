@@ -297,6 +297,11 @@ class StreamTests(unittest.TestCase):
         deduped = stream.dedupe(lambda row: row[0])
         self.assertSequenceEqual([[0, 1], [1, 1]], deduped.to_list())
 
+    def test_sample(self):
+        stream = DataStream(range(100))
+        sampled = stream.sample(0.5, 5).to_list()
+        self.assertEqual(len(sampled), 5)
+
     def test_slots_set(self):
         class Thing(object):
             __slots__ = ['name', 'age']

@@ -1,6 +1,7 @@
 from itertools import islice, chain
 import csv
 from copy import copy
+import random
 from collections import defaultdict, deque, Counter, namedtuple
 import sys
 try:
@@ -352,6 +353,18 @@ class DataStream(object):
                     seen.add(key_fn(row))
                     yield row
         return self.Stream(unique())
+
+    def sample(self, probability, n):
+        """ Sample N rows with a given probability of choosing a given row
+        
+        >>> DataStream(range(100)).sample(0.1, 5)
+        ... 
+
+        :param float probability: probability that a sample is chosen
+        :param int n: population size to sample
+        :rtype: DataStream
+        """
+        return self.filter(lambda row: random.random() > probability).take(n)
 
     def group_by(self, key):
         """ Groups a stream by key, returning a :py:class:`DataSet` of ``(K, tuple(V))``
