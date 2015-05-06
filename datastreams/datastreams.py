@@ -432,13 +432,11 @@ class DataStream(object):
         """ Counts frequency of each row in the stream
 
         >>> DataStream(['a', 'a', 'b', 'c']).count_frequency()
-        ... DataSet([('a', 2), ['b', 1], ['c', 1]])
+        ... DataSet([('a', 2), ('b', 1), ('c', 1)])
 
         :rtype: DataSet
         """
-        def count_reducer(count, row):
-            return count + Counter(row)
-        return self.Set(reduce(count_reducer, self, Counter()).items())
+        return self.Set(Counter(self).items())
 
     def join(self, how, key, right):
         """ Returns a dataset joined using keys from right dataset only
@@ -635,7 +633,7 @@ class DataStream(object):
         :rtype: DataStream
         """
         source_file = open(path)
-        return DataStream(cls.iter_file(source_file))
+        return cls.Stream(cls.iter_file(source_file))
 
     @staticmethod
     def iter_file(source_file):
