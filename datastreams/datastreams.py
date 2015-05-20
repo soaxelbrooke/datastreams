@@ -2,11 +2,14 @@ from itertools import islice, chain
 import csv
 from copy import copy
 import random
-from collections import defaultdict, deque, Counter, namedtuple
+try:
+    from collections import defaultdict, deque, Counter, namedtuple
+except ImportError:
+    from backport_collections import defaultdict, deque, Counter, namedtuple
 import sys
 try:
     reduce
-except:
+except NameError:
     from functools import reduce
 
 
@@ -607,7 +610,7 @@ class DataStream(object):
         :rtype: DataStream
         """
         def attr_filter(row):
-            return Datum({name: getattr(row, name) for name in attr_names})
+            return Datum(dict((name, getattr(row, name)) for name in attr_names))
         return self.map(attr_filter)
 
     def where(self, name):
@@ -846,7 +849,7 @@ def get_object_attrs(obj):
     if hasattr(obj, '__dict__'):
         return obj.__dict__
     elif hasattr(obj, '__slots__'):
-        return {key: getattr(obj, key) for key in obj.__slots__}
+        return dict((key, getattr(obj, key)) for key in obj.__slots__)
     else:
         return {}
 

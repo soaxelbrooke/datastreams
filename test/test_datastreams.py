@@ -6,7 +6,10 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0,parentdir)
 
 from datastreams import DataSet, DataStream, Datum, DictSet, DictStream
-import unittest
+if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+    import unittest2 as unittest
+else:
+    import unittest
 try:
     reduce
 except:

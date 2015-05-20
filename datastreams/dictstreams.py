@@ -28,11 +28,11 @@ class DictStream(DataStream):
         return self.map(rowget)
 
     def delete(self, key):
-        transform = lambda row: {k: v for k, v in row.items() if k != key}
+        transform = lambda row: dict((k, v) for k, v in row.items() if k != key)
         return self.Stream(self, transform=transform)
 
     def select(self, *args):
-        transform = lambda row: {k: v for k, v in row.items() if k in args}
+        transform = lambda row: dict((k, v) for k, v in row.items() if k in args)
         return self.Stream(self, transform=transform)
 
     def groupby(self, key, reduce_fn, init):
