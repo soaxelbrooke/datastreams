@@ -76,14 +76,24 @@ class DataStream(object):
     def next(self):
         return self.__next__()
 
-    def reduce(self, function, initial):
+    def reduce(self, function, initial=None):
         """ Applying a reducing function to rows in a stream
 
         :param function function: reducing function, with parameters ``last_iteration``, ``next_value``
-        :param initial: initial value for the reduction
+        :param initial: initial value for reduce, if None, takes the first element of this stream as initial
+        """
+        if initial is None:
+            initial = next(self)
+        return reduce(function, self, initial)
+
+    def reduce_to_dataset(self, function, initial=None):
+        """ Applies a reducer over this stream, returning a `DataSet` of the results
+
+        :param function: reducing function, with parameters ``last_iteration``, ``next_value``
+        :param initial: initial value for reduce, if None, takes the first element of this stream as initial
         :rtype: DataSet
         """
-        return self.Set(reduce(function, self, initial))
+        return DataSet(self.reduce(function, initial))
 
     def map(self, function):
         """ Apply a function to each row in this stream
@@ -299,6 +309,19 @@ class DataStream(object):
         ... <datastreams.DataStream at 0x7f6995ea4790>
         """
         list(self)
+
+    def count(self):
+        """ Counts the number of rows in this stream.  This will exhaust a stream!
+
+        >>> DataStream(range(5)).count()
+        ... 5
+
+        :rtype: int
+        """
+        count = 0
+        for _ in self:
+            count += 1
+        return count
 
     def batch(self, batch_size):
         """ Batches rows of a stream in a given chunk size

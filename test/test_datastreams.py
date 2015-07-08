@@ -117,8 +117,20 @@ class StreamTests(unittest.TestCase):
     def test_reduce(self):
         stream = DataStream(range(5))
         factorials = stream.map(lambda num: num + 1)\
-            .reduce(lambda facts, num: facts + [num * facts[-1]], [1])[-1]
+            .reduce(lambda facts, num: facts * num)
         self.assertEqual(factorials, 5*4*3*2*1)
+
+    def test_reduce_to_dataset(self):
+        stream = DataStream(range(5))
+
+        def filtreducer(agg, row):
+            if row % 2 == 0:
+                return agg + [row]
+            return agg
+        ghetto_filtered = stream.reduce(filtreducer, [])
+        self.assertEqual(ghetto_filtered[0], 0)
+        self.assertEqual(ghetto_filtered[1], 2)
+        self.assertEqual(ghetto_filtered[2], 4)
 
     def test_reduce_builtin(self):
         stream = DataStream(range(5))
@@ -196,6 +208,10 @@ class StreamTests(unittest.TestCase):
         self.assertEqual(next(second_half), 6)
         self.assertEqual(next(second_half), 7)
         self.assertEqual(next(second_half), 8)
+
+    def test_count(self):
+        n = 20
+        self.assertEqual(DataStream(range(n)).count(), n)
 
     def test_count_frequency(self):
         stream = DataStream("Hello, world!")
