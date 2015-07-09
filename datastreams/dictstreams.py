@@ -32,8 +32,8 @@ class DictStream(DataStream):
     @staticmethod
     def join_objects(left, right):
         joined = {}
-        joined.update(left.items())
         joined.update(right.items())
+        joined.update(left.items())
         joined['left'] = left
         joined['right'] = right
         return joined
