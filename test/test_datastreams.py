@@ -380,5 +380,15 @@ class DictStreamTests(unittest.TestCase):
         self.assertEqual(brad['name'], 'brad')
         self.assertEqual(brad['age'], 30)
 
+    def test_dictstream_where(self):
+        stream = DictStream([{'name': 'brad', 'age': 25}])\
+            .set('height', lambda row: 70)\
+            .set('age', lambda row: 30).collect()
+
+        filtered_empty = stream.where('age').gt(40).collect()
+        filtered_something = stream.where('age').lt(40).collect()
+        self.assertEqual(len(filtered_empty), 0)
+        self.assertEqual(len(filtered_something), 1)
+
 if __name__ == '__main__':
     unittest.main()

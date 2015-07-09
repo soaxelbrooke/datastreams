@@ -1,5 +1,4 @@
-from datastreams import DataStream, DataSet
-from collections import defaultdict
+from datastreams import DataStream, DataSet, FilterRadix
 from copy import copy
 
 
@@ -40,6 +39,14 @@ class DictStream(DataStream):
         for row in self:
             groups[row[key]] = reduce_fn(groups.get(row[key], init), row)
         return groups
+
+    def where(self, name):
+        return DictFilterRadix(self, name)
+
+class DictFilterRadix(FilterRadix):
+    @staticmethod
+    def getattr(row, name):
+        return row.get(name)
 
 
 class DictSet(DictStream, DataSet):

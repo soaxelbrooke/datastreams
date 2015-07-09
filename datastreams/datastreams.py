@@ -708,83 +708,87 @@ class FilterRadix(object):
         self._source = stream
         self.attr_name = attr_name
 
+    @staticmethod
+    def getattr(row, name):
+        return getattr(row, name)
+
     def eq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: getattr(row, name) == value)
+        return self._source.filter(lambda row: self.getattr(row, name) == value)
 
     def neq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: getattr(row, name) != value)
+        return self._source.filter(lambda row: self.getattr(row, name) != value)
 
     def gt(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: getattr(row, name) > value)
+        return self._source.filter(lambda row: self.getattr(row, name) > value)
 
     def gteq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: getattr(row, name) >= value)
+        return self._source.filter(lambda row: self.getattr(row, name) >= value)
 
     def lt(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: getattr(row, name) < value)
+        return self._source.filter(lambda row: self.getattr(row, name) < value)
 
     def lteq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: getattr(row, name) <= value)
+        return self._source.filter(lambda row: self.getattr(row, name) <= value)
 
     def is_in(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: getattr(row, name) in value)
+        return self._source.filter(lambda row: self.getattr(row, name) in value)
 
     def not_in(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: getattr(row, name) not in value)
+        return self._source.filter(lambda row: self.getattr(row, name) not in value)
 
     def isinstance(self, value):
         name = self.attr_name
         return self._source.filter(
-            lambda row: isinstance(getattr(row, name), value))
+            lambda row: isinstance(self.getattr(row, name), value))
 
     def notinstance(self, value):
         name = self.attr_name
         return self._source.filter(
-            lambda row: not isinstance(getattr(row, name), value))
+            lambda row: not isinstance(self.getattr(row, name), value))
 
     def is_(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: getattr(row, name) is value)
+        return self._source.filter(lambda row: self.getattr(row, name) is value)
 
     def is_not(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: getattr(row, name) is not value)
+        return self._source.filter(lambda row: self.getattr(row, name) is not value)
 
     def contains(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: value in getattr(row, name))
+        return self._source.filter(lambda row: value in self.getattr(row, name))
 
     def doesnt_contain(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: value not in getattr(row, name))
+        return self._source.filter(lambda row: value not in self.getattr(row, name))
 
     def len_eq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: len(getattr(row, name)) == value)
+        return self._source.filter(lambda row: len(self.getattr(row, name)) == value)
 
     def len_gt(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: len(getattr(row, name)) > value)
+        return self._source.filter(lambda row: len(self.getattr(row, name)) > value)
 
     def len_lt(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: len(getattr(row, name)) < value)
+        return self._source.filter(lambda row: len(self.getattr(row, name)) < value)
 
     def len_gteq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: len(getattr(row, name)) >= value)
+        return self._source.filter(lambda row: len(self.getattr(row, name)) >= value)
 
     def len_lteq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: len(getattr(row, name)) <= value)
+        return self._source.filter(lambda row: len(self.getattr(row, name)) <= value)
 
 
 class DataSet(DataStream):
