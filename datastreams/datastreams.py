@@ -115,7 +115,7 @@ class DataStream(object):
         :param str method: name of method to be called
         :rtype: DataStream
         """
-        return self.map(lambda row: getattr(row, method)(*args, **kwargs))
+        return self.map(lambda row: self.getattr(row, method)(*args, **kwargs))
 
     def concat(self):
         """ Alias for :py:func:`chain`
@@ -181,7 +181,7 @@ class DataStream(object):
         :param str method: name of method to be called
         :rtype: DataStream
         """
-        return self.filter(lambda row: getattr(row, method)(*args, **kwargs))
+        return self.filter(lambda row: self.getattr(row, method)(*args, **kwargs))
 
     def set(self, name, transfer_func=None, value=None):
         """ Sets the named attribute of each row in the stream using the supplied function
@@ -193,12 +193,12 @@ class DataStream(object):
         if transfer_func is not None:
             def row_setattr(row):
                 new_row = copy(row)
-                setattr(new_row, name, transfer_func(row))
+                self.setattr(new_row, name, transfer_func(row))
                 return new_row
         else:
             def row_setattr(row):
                 new_row = copy(row)
-                setattr(new_row, name, value)
+                self.setattr(new_row, name, value)
                 return new_row
 
         return self.map(row_setattr)
@@ -215,7 +215,7 @@ class DataStream(object):
         :rtype: DataStream
         """
         def row_getattr(row):
-            return getattr(row, name) if hasattr(row, name) else default
+            return self.getattr(row, name) if self.hasattr(row, name) else default
         return self.map(row_getattr)
 
     def delete(self, attr):
@@ -402,7 +402,7 @@ class DataStream(object):
         :param str key: attribute name to group by
         :rtype: DataSet
         """
-        return self.group_by_fn(lambda row: getattr(row, key))
+        return self.group_by_fn(lambda row: self.getattr(row, key))
 
     def group_by_fn(self, key_fn):
         """ Groups a stream by function, returning a :py:class:`DataSet` of ``(K, tuple(V))``
@@ -464,6 +464,16 @@ class DataStream(object):
         """
         return self.Set(Counter(self).items())
 
+    @staticmethod
+    def join_objects(left, right):
+        joined_class = type(left.__class__.__name__ + right.__class__.__name__, (Datum,), {})
+        attrs = {}
+        attrs.update(get_object_attrs(right))
+        attrs.update(get_object_attrs(left))
+        attrs['left'] = left
+        attrs['right'] = right
+        return joined_class(attrs)
+
     def join(self, how, key, right):
         """ Returns a dataset joined using keys from right dataset only
 
@@ -513,7 +523,7 @@ class DataStream(object):
         :param str key: attribute name to join on
         :rtype: DataSet
         """
-        key_fn = lambda ele: getattr(ele, key)
+        key_fn = lambda ele: self.getattr(ele, key)
         return self.left_join_by(key_fn, key_fn, right)
 
     def left_join_by(self, left_key_fn, right_key_fn, right):
@@ -531,7 +541,7 @@ class DataStream(object):
         joined = []
         for ele in self:
             for other in joiner.get(left_key_fn(ele), [None]):
-                joined.append(join_objects(ele, other))
+                joined.append(self.join_objects(ele, other))
         return self.Set(joined)
 
     def right_join(self, key, right):
@@ -541,7 +551,7 @@ class DataStream(object):
         :param str key: attribute name to join on
         :rtype: DataSet
         """
-        key_fn = lambda ele: getattr(ele, key)
+        key_fn = lambda ele: self.getattr(ele, key)
         return self.right_join_by(key_fn, key_fn, right)
 
     def right_join_by(self, left_key_fn, right_key_fn, right):
@@ -558,7 +568,7 @@ class DataStream(object):
         joined = []
         for ele in right:
             for other in joiner.get(right_key_fn(ele), [None]):
-                joined.append(join_objects(ele, other))
+                joined.append(self.join_objects(ele, other))
         return self.Set(joined)
 
     def inner_join(self, key, right):
@@ -568,7 +578,7 @@ class DataStream(object):
         :param str key: attribute name to join on
         :rtype: DataSet
         """
-        key_fn = lambda ele: getattr(ele, key)
+        key_fn = lambda ele: self.getattr(ele, key)
         return self.inner_join_by(key_fn, key_fn, right)
 
     def inner_join_by(self, left_key_fn, right_key_fn, right):
@@ -585,7 +595,7 @@ class DataStream(object):
         joined = []
         for ele in self:
             for other in joiner[left_key_fn(ele)]:
-                joined.append(join_objects(ele, other))
+                joined.append(self.join_objects(ele, other))
         return self.Set(joined)
 
     def outer_join(self, key, right):
@@ -595,7 +605,7 @@ class DataStream(object):
         :param str key: attribute name to join on
         :rtype: DataSet
         """
-        key_fn = lambda ele: getattr(ele, key)
+        key_fn = lambda ele: self.getattr(ele, key)
         return self.outer_join_by(key_fn, key_fn, right)
 
     def outer_join_by(self, left_key_fn, right_key_fn, right):
@@ -618,7 +628,7 @@ class DataStream(object):
             for join_key in join_keys:
                 for ele in l.get(join_key, [None]):
                     for other in r.get(join_key, [None]):
-                        yield join_objects(ele, other)
+                        yield self.join_objects(ele, other)
 
         return self.Set(iter_join(left_joiner, right_joiner, keys))
 
@@ -633,7 +643,7 @@ class DataStream(object):
         :rtype: DataStream
         """
         def attr_filter(row):
-            return Datum(dict((name, getattr(row, name)) for name in attr_names))
+            return Datum(dict((name, self.getattr(row, name)) for name in attr_names))
         return self.map(attr_filter)
 
     def where(self, name):
@@ -647,6 +657,18 @@ class DataStream(object):
         :rtype: FilterRadix
         """
         return FilterRadix(self, name)
+
+    @staticmethod
+    def getattr(row, name):
+        return getattr(row, name)
+
+    @staticmethod
+    def hasattr(row, name):
+        return hasattr(row, name)
+
+    @staticmethod
+    def setattr(row, name, value):
+        setattr(row, name, value)
 
     @classmethod
     def from_file(cls, path):
@@ -708,87 +730,83 @@ class FilterRadix(object):
         self._source = stream
         self.attr_name = attr_name
 
-    @staticmethod
-    def getattr(row, name):
-        return getattr(row, name)
-
     def eq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: self.getattr(row, name) == value)
+        return self._source.filter(lambda row: self._source.getattr(row, name) == value)
 
     def neq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: self.getattr(row, name) != value)
+        return self._source.filter(lambda row: self._source.getattr(row, name) != value)
 
     def gt(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: self.getattr(row, name) > value)
+        return self._source.filter(lambda row: self._source.getattr(row, name) > value)
 
     def gteq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: self.getattr(row, name) >= value)
+        return self._source.filter(lambda row: self._source.getattr(row, name) >= value)
 
     def lt(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: self.getattr(row, name) < value)
+        return self._source.filter(lambda row: self._source.getattr(row, name) < value)
 
     def lteq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: self.getattr(row, name) <= value)
+        return self._source.filter(lambda row: self._source.getattr(row, name) <= value)
 
     def is_in(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: self.getattr(row, name) in value)
+        return self._source.filter(lambda row: self._source.getattr(row, name) in value)
 
     def not_in(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: self.getattr(row, name) not in value)
+        return self._source.filter(lambda row: self._source.getattr(row, name) not in value)
 
     def isinstance(self, value):
         name = self.attr_name
         return self._source.filter(
-            lambda row: isinstance(self.getattr(row, name), value))
+            lambda row: isinstance(self._source.getattr(row, name), value))
 
     def notinstance(self, value):
         name = self.attr_name
         return self._source.filter(
-            lambda row: not isinstance(self.getattr(row, name), value))
+            lambda row: not isinstance(self._source.getattr(row, name), value))
 
     def is_(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: self.getattr(row, name) is value)
+        return self._source.filter(lambda row: self._source.getattr(row, name) is value)
 
     def is_not(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: self.getattr(row, name) is not value)
+        return self._source.filter(lambda row: self._source.getattr(row, name) is not value)
 
     def contains(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: value in self.getattr(row, name))
+        return self._source.filter(lambda row: value in self._source.getattr(row, name))
 
     def doesnt_contain(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: value not in self.getattr(row, name))
+        return self._source.filter(lambda row: value not in self._source.getattr(row, name))
 
     def len_eq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: len(self.getattr(row, name)) == value)
+        return self._source.filter(lambda row: len(self._source.getattr(row, name)) == value)
 
     def len_gt(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: len(self.getattr(row, name)) > value)
+        return self._source.filter(lambda row: len(self._source.getattr(row, name)) > value)
 
     def len_lt(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: len(self.getattr(row, name)) < value)
+        return self._source.filter(lambda row: len(self._source.getattr(row, name)) < value)
 
     def len_gteq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: len(self.getattr(row, name)) >= value)
+        return self._source.filter(lambda row: len(self._source.getattr(row, name)) >= value)
 
     def len_lteq(self, value):
         name = self.attr_name
-        return self._source.filter(lambda row: len(self.getattr(row, name)) <= value)
+        return self._source.filter(lambda row: len(self._source.getattr(row, name)) <= value)
 
 
 class DataSet(DataStream):
@@ -881,11 +899,4 @@ def get_object_attrs(obj):
         return {}
 
 
-def join_objects(left, right):
-    joined_class = type(left.__class__.__name__ + right.__class__.__name__, (Datum,), {})
-    attrs = {}
-    attrs.update(get_object_attrs(right))
-    attrs.update(get_object_attrs(left))
-    attrs['left'] = left
-    attrs['right'] = right
-    return joined_class(attrs)
+

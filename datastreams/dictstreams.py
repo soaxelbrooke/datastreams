@@ -1,5 +1,4 @@
-from datastreams import DataStream, DataSet, FilterRadix
-from copy import copy
+from datastreams import DataStream, DataSet
 
 
 class DictStream(DataStream):
@@ -14,36 +13,30 @@ class DictStream(DataStream):
     def Set(iterable):
         return DictSet(iterable)
 
-    def set(self, key, transfer_func):
-        def rowset(row):
-            newrow = copy(row)
-            newrow[key] = transfer_func(row)
-            return newrow
-        return self.map(rowset)
+    @staticmethod
+    def getattr(row, name):
+        return row.get(name)
 
-    def get(self, key, default=None):
-        def rowget(row):
-            return row.get(key, default)
-        return self.map(rowget)
+    @staticmethod
+    def hasattr(row, name):
+        return name in row
+
+    @staticmethod
+    def setattr(row, name, value):
+        row[name] = value
 
     def delete(self, key):
         transform = lambda row: dict((k, v) for k, v in row.items() if k != key)
         return self.Stream(self, transform=transform)
 
-    def select(self, *args):
-        transform = lambda row: dict((k, v) for k, v in row.items() if k in args)
-        return self.Stream(self, transform=transform)
-
-    def group_by(self, key):
-        return self.group_by_fn(lambda row: row.get(key))
-
-    def where(self, name):
-        return DictFilterRadix(self, name)
-
-class DictFilterRadix(FilterRadix):
     @staticmethod
-    def getattr(row, name):
-        return row.get(name)
+    def join_objects(left, right):
+        joined = {}
+        joined.update(left.items())
+        joined.update(right.items())
+        joined['left'] = left
+        joined['right'] = right
+        return joined
 
 
 class DictSet(DictStream, DataSet):

@@ -393,5 +393,15 @@ class DictStreamTests(unittest.TestCase):
         grouped = stream.group_by('name')
         self.assertEqual(len(grouped), 2)
 
+    def test_join_basic(self):
+        streama = DictStream([{'name': 'brad', 'age': 25}, {'name': 'bradley', 'age': 22}])
+        streamb = DictStream([{'name': 'brad', 'num': 21}, {'name': 'cooper', 'num': 22}])
+        joined = streama.join('inner', 'name', streamb)
+        self.assertEqual(len(joined), 1)
+        self.assertEqual(joined[0]['name'], 'brad')
+        self.assertEqual(joined[0]['age'], 25)
+        self.assertEqual(joined[0]['num'], 21)
+
+
 if __name__ == '__main__':
     unittest.main()
