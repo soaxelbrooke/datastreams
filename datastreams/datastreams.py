@@ -402,7 +402,7 @@ class DataStream(object):
         :param str key: attribute name to group by
         :rtype: DataSet
         """
-        return self.group_by_fn(lambda ele: getattr(ele, key))
+        return self.group_by_fn(lambda row: getattr(row, key))
 
     def group_by_fn(self, key_fn):
         """ Groups a stream by function, returning a :py:class:`DataSet` of ``(K, tuple(V))``

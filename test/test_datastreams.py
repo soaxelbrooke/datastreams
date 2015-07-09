@@ -381,14 +381,17 @@ class DictStreamTests(unittest.TestCase):
         self.assertEqual(brad['age'], 30)
 
     def test_dictstream_where(self):
-        stream = DictStream([{'name': 'brad', 'age': 25}])\
-            .set('height', lambda row: 70)\
-            .set('age', lambda row: 30).collect()
+        stream = DictSet([{'name': 'brad', 'age': 25}])
 
         filtered_empty = stream.where('age').gt(40).collect()
         filtered_something = stream.where('age').lt(40).collect()
         self.assertEqual(len(filtered_empty), 0)
         self.assertEqual(len(filtered_something), 1)
+
+    def test_group_by(self):
+        stream = DictStream([{'name': 'brad', 'age': 25}, {'name': 'bradley', 'age': 22}])
+        grouped = stream.group_by('name')
+        self.assertEqual(len(grouped), 2)
 
 if __name__ == '__main__':
     unittest.main()

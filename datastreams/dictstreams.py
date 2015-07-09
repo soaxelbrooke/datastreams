@@ -34,11 +34,8 @@ class DictStream(DataStream):
         transform = lambda row: dict((k, v) for k, v in row.items() if k in args)
         return self.Stream(self, transform=transform)
 
-    def groupby(self, key, reduce_fn, init):
-        groups = {}
-        for row in self:
-            groups[row[key]] = reduce_fn(groups.get(row[key], init), row)
-        return groups
+    def group_by(self, key):
+        return self.group_by_fn(lambda row: row.get(key))
 
     def where(self, name):
         return DictFilterRadix(self, name)
