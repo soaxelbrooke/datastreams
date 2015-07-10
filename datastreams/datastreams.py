@@ -680,11 +680,24 @@ class DataStream(object):
         :param str path: path to file to be streamed
         :rtype: DataStream
         """
-        source_file = open(path)
-        return cls.Stream(cls.iter_file(source_file))
+        return cls.Stream(cls.iter_file(path))
+
+    @classmethod
+    def from_files(cls, paths):
+        return cls.Stream(cls.iter_files(paths))
 
     @staticmethod
-    def iter_file(source_file):
+    def iter_files(paths):
+        for path in paths:
+            source_file = open(path)
+            for line in source_file:
+                yield line
+            source_file.close()
+        raise StopIteration
+
+    @staticmethod
+    def iter_file(path):
+        source_file = open(path)
         for line in source_file:
             yield line
         source_file.close()

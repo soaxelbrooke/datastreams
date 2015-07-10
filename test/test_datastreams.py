@@ -341,6 +341,10 @@ class StreamTests(unittest.TestCase):
         other_things = things.join('inner', 'name', others).set('age', value=20)
         self.assertEqual(next(other_things).age, 20)
 
+    def test_from_files(self):
+        stream = DataStream.from_files(['test_set_1.csv', 'test_set_2.csv'])
+        self.assertEqual(stream.count(), 11)
+
 
 class DataSetTests(unittest.TestCase):
     def test_map(self):
