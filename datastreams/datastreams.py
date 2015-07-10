@@ -801,6 +801,14 @@ class FilterRadix(object):
         name = self.attr_name
         return self._source.filter(lambda row: value not in self._source.getattr(row, name))
 
+    def startswith(self, substring):
+        name = self.attr_name
+        return self._source.filter(lambda row: self._source.getattr(row, name).startswith(substring))
+
+    def endswith(self, substring):
+        name = self.attr_name
+        return self._source.filter(lambda row: self._source.getattr(row, name).endswith(substring))
+
     def len_eq(self, value):
         name = self.attr_name
         return self._source.filter(lambda row: len(self._source.getattr(row, name)) == value)
