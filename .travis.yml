@@ -3,4 +3,4 @@ python:
   - "3.4"
   - "2.7"
   - "pypy"
-script:  python -m test.test_join
+script:  cd test; python -m test_datastreams
