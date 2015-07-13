@@ -1,4 +1,4 @@
-# Python DataStreams
+# Python DataStreams ![](https://travis-ci.org/StuartAxelOwen/datastreams.svg?branch=master)
 
 A streaming library to make your data processing beautiful and succinct.
 
