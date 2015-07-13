@@ -65,7 +65,7 @@ class DataStream(object):
         return "{}({})".format(self.__class__.__name__, str(self._source))
 
     def __str__(self):
-        return self.__str__()
+        return self.__repr__()
 
     def __next__(self):
         while True:
