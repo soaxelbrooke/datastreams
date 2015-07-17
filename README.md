@@ -6,7 +6,7 @@ A streaming library to make your data processing beautiful and succinct.
 >>> from datastreams import DataStream
 
 >>> DataStream("Hello, gorgeous.")\
-...     .filter(lambda char: char.isalpha())\
+...     .filter(str.isalpha)\
 ...     .map_method('lower')\
 ...     .count_frequency().to_list()
 [('e', 2), ('g', 2), ('h', 1), ('l', 2), ('o', 3), ('s', 1), ('r', 1), ('u', 1)]
