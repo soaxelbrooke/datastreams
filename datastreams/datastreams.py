@@ -244,6 +244,11 @@ class DataStream(object):
             return row
         return self.map(apply_fn)
 
+    def print_each(self):
+        def printer(row):
+            print(row)
+        return self.for_each(printer)
+
     def take(self, n):
         """ Takes n rows from the stream
 
@@ -418,6 +423,9 @@ class DataStream(object):
         for ele in self:
             grouper[key_fn(ele)].append(ele)
         return self.Set(grouper.items())
+
+    def to(self, constructor):
+        return constructor(self)
 
     def to_dict(self):
         """ Converts a stream to a :py:class:`dict`
@@ -646,7 +654,7 @@ class DataStream(object):
             return Datum(dict((name, self.getattr(row, name)) for name in attr_names))
         return self.map(attr_filter)
 
-    def where(self, name):
+    def where(self, name=None):
         """ Short hand for common filter functions - ``where`` selects an attribute to be filtered on, with a condition like ``gt`` or ``contains`` following it.
 
         >>> Person = namedtuple('Person', ['name', 'year_born'])
@@ -660,6 +668,8 @@ class DataStream(object):
 
     @staticmethod
     def getattr(row, name):
+        if name is None:
+            return row
         return getattr(row, name)
 
     @staticmethod
@@ -774,6 +784,18 @@ class FilterRadix(object):
     def not_in(self, value):
         name = self.attr_name
         return self._source.filter(lambda row: self._source.getattr(row, name) not in value)
+
+    def has_length(self, value):
+        name = self.attr_name
+        return self._source.filter(lambda row: len(self._source.getattr(row, name)) == value)
+
+    def shorter_than(self, value):
+        name = self.attr_name
+        return self._source.filter(lambda row: len(self._source.getattr(row, name)) < value)
+
+    def longer_than(self, value):
+        name = self.attr_name
+        return self._source.filter(lambda row: len(self._source.getattr(row, name)) > value)
 
     def isinstance(self, value):
         name = self.attr_name

@@ -220,6 +220,11 @@ class StreamTests(unittest.TestCase):
         self.assertEqual(dict(counts)['e'], 1)
         self.assertEqual(dict(counts)['!'], 1)
 
+    def test_to(self):
+        stream = DataStream(['{"key": "value"}'])\
+            .to(list)
+        self.assertTrue(isinstance(stream, list))
+
     def test_to_dict(self):
         stream = DataStream("Hello, world!")
         counts = stream.count_frequency().to_dict()
@@ -370,6 +375,12 @@ class FilterRadixTests(unittest.TestCase):
         some_primes = [1, 2, 3, 5, 7]
         those_primes = list(stream.where('real').is_in(some_primes))
         self.assertListEqual(those_primes, some_primes)
+
+    def test_lengths(self):
+        stream = DataSet(['hello', 'hello world', 'hello even more worlds'])
+        self.assertEqual(stream.where().shorter_than(10).count(), 1)
+        self.assertEqual(stream.where().longer_than(10).count(), 2)
+        self.assertEqual(stream.where().has_length(5).count(), 1)
 
 
 class DictStreamTests(unittest.TestCase):
