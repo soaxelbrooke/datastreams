@@ -1,5 +1,4 @@
-from datastreams import DataStream, DataSet
-
+from datastreams import DataStream, DataSet, Nothing
 
 class DictStream(DataStream):
 
@@ -15,6 +14,8 @@ class DictStream(DataStream):
 
     @staticmethod
     def getattr(row, name):
+        if name is Nothing:
+            return row
         return row.get(name)
 
     @staticmethod

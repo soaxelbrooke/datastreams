@@ -2,6 +2,7 @@ from itertools import islice, chain
 import csv
 from copy import copy
 import random
+import os
 try:
     from collections import defaultdict, deque, Counter, namedtuple
 except ImportError:
@@ -11,6 +12,10 @@ try:
     reduce
 except NameError:
     from functools import reduce
+
+
+class Nothing(object):
+    pass
 
 
 class Datum(object):
@@ -654,7 +659,7 @@ class DataStream(object):
             return Datum(dict((name, self.getattr(row, name)) for name in attr_names))
         return self.map(attr_filter)
 
-    def where(self, name=None):
+    def where(self, name=Nothing):
         """ Short hand for common filter functions - ``where`` selects an attribute to be filtered on, with a condition like ``gt`` or ``contains`` following it.
 
         >>> Person = namedtuple('Person', ['name', 'year_born'])
@@ -668,7 +673,7 @@ class DataStream(object):
 
     @staticmethod
     def getattr(row, name):
-        if name is None:
+        if name is Nothing:
             return row
         return getattr(row, name)
 
@@ -747,6 +752,16 @@ class DataStream(object):
         """
         return cls.Stream(sys.stdin)
 
+    def write_to_file(self, path):
+        with open(path, 'w') as outfile:
+            for row in self:
+                outfile.write(row + os.linesep)
+
+    def append_to_file(self, path):
+        with open(path, 'a') as outfile:
+            for row in self:
+                outfile.write(row + os.linesep)
+
 
 class FilterRadix(object):
     def __init__(self, stream, attr_name):
@@ -796,6 +811,14 @@ class FilterRadix(object):
     def longer_than(self, value):
         name = self.attr_name
         return self._source.filter(lambda row: len(self._source.getattr(row, name)) > value)
+
+    def truthy(self):
+        name = self.attr_name
+        return self._source.filter(lambda row: self._source.getattr(row, name))
+
+    def falsey(self):
+        name = self.attr_name
+        return self._source.filter(lambda row: not self._source.getattr(row, name))
 
     def isinstance(self, value):
         name = self.attr_name
